@@ -1,0 +1,77 @@
+{
+  "junior": {
+    "label": "初中英语库",
+    "words": [
+      {"word": "apple", "phonetic": "/ˈæpəl/", "meaning": "n. 苹果", "example": "I eat an apple every day."},
+      {"word": "family", "phonetic": "/ˈfæməli/", "meaning": "n. 家庭；家人", "example": "My family has dinner together."},
+      {"word": "friend", "phonetic": "/frend/", "meaning": "n. 朋友", "example": "She is my best friend."},
+      {"word": "weather", "phonetic": "/ˈweðər/", "meaning": "n. 天气", "example": "The weather is sunny today."},
+      {"word": "question", "phonetic": "/ˈkwestʃən/", "meaning": "n. 问题", "example": "May I ask a question?"},
+      {"word": "library", "phonetic": "/ˈlaɪbrəri/", "meaning": "n. 图书馆", "example": "We read books in the library."},
+      {"word": "important", "phonetic": "/ɪmˈpɔːrtənt/", "meaning": "adj. 重要的", "example": "Sleep is important for health."},
+      {"word": "usually", "phonetic": "/ˈjuːʒuəli/", "meaning": "adv. 通常", "example": "I usually get up at seven."},
+      {"word": "different", "phonetic": "/ˈdɪfrənt/", "meaning": "adj. 不同的", "example": "We have different ideas."},
+      {"word": "practice", "phonetic": "/ˈpræktɪs/", "meaning": "v./n. 练习", "example": "Practice makes progress."}
+    ]
+  },
+  "senior": {
+    "label": "高中英语库",
+    "words": [
+      {"word": "attitude", "phonetic": "/ˈætɪtuːd/", "meaning": "n. 态度", "example": "A positive attitude helps a lot."},
+      {"word": "challenge", "phonetic": "/ˈtʃælɪndʒ/", "meaning": "n./v. 挑战", "example": "The exam is a real challenge."},
+      {"word": "contribute", "phonetic": "/kənˈtrɪbjuːt/", "meaning": "v. 贡献；促成", "example": "Everyone can contribute to the project."},
+      {"word": "environment", "phonetic": "/ɪnˈvaɪrənmənt/", "meaning": "n. 环境", "example": "We should protect the environment."},
+      {"word": "opportunity", "phonetic": "/ˌɑːpərˈtuːnəti/", "meaning": "n. 机会", "example": "This is a good opportunity to learn."},
+      {"word": "responsibility", "phonetic": "/rɪˌspɑːnsəˈbɪləti/", "meaning": "n. 责任", "example": "It is our responsibility to help."},
+      {"word": "benefit", "phonetic": "/ˈbenɪfɪt/", "meaning": "n./v. 益处；受益", "example": "Exercise benefits both body and mind."},
+      {"word": "concern", "phonetic": "/kənˈsɜːrn/", "meaning": "n./v. 关心；担忧", "example": "Parents show concern for their children."},
+      {"word": "effective", "phonetic": "/ɪˈfektɪv/", "meaning": "adj. 有效的", "example": "This is an effective method."},
+      {"word": "improve", "phonetic": "/ɪmˈpruːv/", "meaning": "v. 提高；改善", "example": "Reading can improve your vocabulary."}
+    ]
+  },
+  "cet4": {
+    "label": "四级词库",
+    "words": [
+      {"word": "available", "phonetic": "/əˈveɪləbəl/", "meaning": "adj. 可获得的；有空的", "example": "The report is available online."},
+      {"word": "approach", "phonetic": "/əˈproʊtʃ/", "meaning": "n./v. 方法；接近", "example": "We need a new approach."},
+      {"word": "community", "phonetic": "/kəˈmjuːnəti/", "meaning": "n. 社区；群体", "example": "The community supports the plan."},
+      {"word": "economic", "phonetic": "/ˌiːkəˈnɑːmɪk/", "meaning": "adj. 经济的", "example": "Economic growth has slowed."},
+      {"word": "efficient", "phonetic": "/ɪˈfɪʃənt/", "meaning": "adj. 高效的", "example": "This tool is efficient."},
+      {"word": "essential", "phonetic": "/ɪˈsenʃəl/", "meaning": "adj. 必要的；本质的", "example": "Water is essential for life."},
+      {"word": "individual", "phonetic": "/ˌɪndɪˈvɪdʒuəl/", "meaning": "n./adj. 个人；个体的", "example": "Each individual has a choice."},
+      {"word": "maintain", "phonetic": "/meɪnˈteɪn/", "meaning": "v. 维持；维护", "example": "We must maintain a healthy habit."},
+      {"word": "significant", "phonetic": "/sɪɡˈnɪfɪkənt/", "meaning": "adj. 重要的；显著的", "example": "The change is significant."},
+      {"word": "transport", "phonetic": "/ˈtrænspɔːrt/", "meaning": "n./v. 运输", "example": "Public transport is convenient."}
+    ]
+  },
+  "cet6": {
+    "label": "六级词库",
+    "words": [
+      {"word": "accommodate", "phonetic": "/əˈkɑːmədeɪt/", "meaning": "v. 容纳；适应", "example": "The hall can accommodate 500 people."},
+      {"word": "consequence", "phonetic": "/ˈkɑːnsəkwens/", "meaning": "n. 后果；结果", "example": "Every choice has a consequence."},
+      {"word": "controversial", "phonetic": "/ˌkɑːntrəˈvɜːrʃəl/", "meaning": "adj. 有争议的", "example": "The policy is controversial."},
+      {"word": "dimension", "phonetic": "/daɪˈmenʃən/", "meaning": "n. 方面；维度", "example": "The issue has another dimension."},
+      {"word": "inevitable", "phonetic": "/ɪnˈevɪtəbəl/", "meaning": "adj. 不可避免的", "example": "Change is inevitable."},
+      {"word": "legitimate", "phonetic": "/lɪˈdʒɪtəmət/", "meaning": "adj. 合法的；合理的", "example": "That is a legitimate concern."},
+      {"word": "perspective", "phonetic": "/pərˈspektɪv/", "meaning": "n. 视角；观点", "example": "Try to see it from another perspective."},
+      {"word": "phenomenon", "phonetic": "/fəˈnɑːmɪnən/", "meaning": "n. 现象", "example": "This phenomenon is common."},
+      {"word": "substantial", "phonetic": "/səbˈstænʃəl/", "meaning": "adj. 大量的；实质的", "example": "They made substantial progress."},
+      {"word": "sustainable", "phonetic": "/səˈsteɪnəbəl/", "meaning": "adj. 可持续的", "example": "We need sustainable development."}
+    ]
+  },
+  "ielts": {
+    "label": "雅思词库",
+    "words": [
+      {"word": "allocate", "phonetic": "/ˈæləkeɪt/", "meaning": "v. 分配", "example": "The government allocated funds to education."},
+      {"word": "assumption", "phonetic": "/əˈsʌmpʃən/", "meaning": "n. 假设", "example": "The argument is based on an assumption."},
+      {"word": "coherent", "phonetic": "/koʊˈhɪrənt/", "meaning": "adj. 连贯的", "example": "Write a coherent essay."},
+      {"word": "decline", "phonetic": "/dɪˈklaɪn/", "meaning": "n./v. 下降；拒绝", "example": "The birth rate continues to decline."},
+      {"word": "diverse", "phonetic": "/daɪˈvɜːrs/", "meaning": "adj. 多样的", "example": "The city has a diverse culture."},
+      {"word": "enhance", "phonetic": "/ɪnˈhæns/", "meaning": "v. 提高；增强", "example": "Technology can enhance learning."},
+      {"word": "infrastructure", "phonetic": "/ˈɪnfrəstrʌktʃər/", "meaning": "n. 基础设施", "example": "The city improved its infrastructure."},
+      {"word": "justify", "phonetic": "/ˈdʒʌstɪfaɪ/", "meaning": "v. 证明……合理", "example": "Can you justify your opinion?"},
+      {"word": "priority", "phonetic": "/praɪˈɔːrəti/", "meaning": "n. 优先事项", "example": "Education should be a priority."},
+      {"word": "whereas", "phonetic": "/werˈæz/", "meaning": "conj. 然而；鉴于", "example": "Some people prefer cities, whereas others like villages."}
+    ]
+  }
+}

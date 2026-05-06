@@ -10,6 +10,7 @@ import threading
 import time
 import tkinter as tk
 from tkinter import messagebox
+from tkinter import ttk
 
 try:
     import pystray
@@ -34,6 +35,7 @@ MUTEX_NAME = "Global\\KeyboardPetPandaSingleInstance"
 WATER_REMINDER_SECONDS = 30 * 60
 MOVE_REMINDER_SECONDS = 60 * 60
 REMINDER_POPUP_SECONDS = 60
+DEFAULT_VOCAB_BANK = "junior"
 
 
 def resource_path(*parts):
@@ -43,6 +45,10 @@ def resource_path(*parts):
 
 def skin_path(*parts):
     return resource_path("assets", "skins", "panda", *parts)
+
+
+def vocab_path(*parts):
+    return resource_path("assets", "vocab", *parts)
 
 
 def config_path():
@@ -241,6 +247,17 @@ class PetApp:
         self.active_reminder = None
         self.reminder_window = None
         self.reminder_auto_close_id = None
+        self.word_banks = self._load_word_banks()
+        self.vocab_bank_id = self.settings.get("vocab_bank", DEFAULT_VOCAB_BANK)
+        if self.vocab_bank_id not in self.word_banks:
+            self.vocab_bank_id = next(iter(self.word_banks), DEFAULT_VOCAB_BANK)
+        self.vocab_progress = self.settings.get("vocab_progress", {})
+        if not isinstance(self.vocab_progress, dict):
+            self.vocab_progress = {}
+        self.vocab_window = None
+        self.current_vocab_word = None
+        self.current_vocab_answer_visible = True
+        self.vocab_vars = {}
 
         self._make_menu()
         self._bind_window()
@@ -280,6 +297,8 @@ class PetApp:
             "reminders": self.reminders_enabled.get(),
             "water_reminder_remaining": max(1, int(self.next_water_reminder_at - time.monotonic())),
             "move_reminder_remaining": max(1, int(self.next_move_reminder_at - time.monotonic())),
+            "vocab_bank": self.vocab_bank_id,
+            "vocab_progress": self.vocab_progress,
             "x": self.window_x if self.window_x is not None else self.root.winfo_x(),
             "y": self.window_y if self.window_y is not None else self.root.winfo_y(),
         }
@@ -321,6 +340,7 @@ class PetApp:
             variable=self.reminders_enabled,
             command=self._toggle_reminders,
         )
+        self.menu.add_command(label="摸鱼背单词", command=self._open_vocab_window)
         self.menu.add_command(label="回到右下角", command=self._place_default)
         self.menu.add_separator()
         self.menu.add_command(label="退出", command=self.close)
@@ -353,6 +373,7 @@ class PetApp:
             pystray.MenuItem("音效", after(self._toggle_sound_from_tray)),
             pystray.MenuItem("避让鼠标", after(self._toggle_avoid_from_tray)),
             pystray.MenuItem("健康提醒", after(self._toggle_reminders_from_tray)),
+            pystray.MenuItem("摸鱼背单词", after(self._open_vocab_window)),
             pystray.MenuItem("回到右下角", after(self._place_default)),
             pystray.MenuItem("退出", after(self.close)),
         )
@@ -448,6 +469,33 @@ class PetApp:
             raise
         return frames
 
+    def _load_word_banks(self):
+        path = vocab_path("word_banks.json")
+        try:
+            with path.open("r", encoding="utf-8") as file:
+                banks = json.load(file)
+        except (OSError, json.JSONDecodeError):
+            return {}
+        if not isinstance(banks, dict):
+            return {}
+        clean_banks = {}
+        for bank_id, bank in banks.items():
+            if not isinstance(bank, dict):
+                continue
+            words = bank.get("words", [])
+            if not isinstance(words, list):
+                continue
+            clean_words = []
+            for item in words:
+                if isinstance(item, dict) and item.get("word") and item.get("meaning"):
+                    clean_words.append(item)
+            if clean_words:
+                clean_banks[bank_id] = {
+                    "label": bank.get("label", bank_id),
+                    "words": clean_words,
+                }
+        return clean_banks
+
     def _toggle_topmost(self):
         self.root.attributes("-topmost", self.always_on_top.get())
         self._save_settings()
@@ -498,6 +546,195 @@ class PetApp:
             self.root.attributes("-topmost", self.always_on_top.get())
         else:
             self.root.withdraw()
+
+    def _open_vocab_window(self):
+        if self.vocab_window and self.vocab_window.winfo_exists():
+            self.vocab_window.deiconify()
+            self.vocab_window.lift()
+            return
+        if not self.word_banks:
+            messagebox.showwarning("摸鱼背单词", "没有找到可用词库。")
+            return
+
+        window = tk.Toplevel(self.root)
+        self.vocab_window = window
+        window.title("摸鱼背单词")
+        window.attributes("-topmost", True)
+        window.resizable(False, False)
+        window.configure(bg="#f8fafc")
+        window.protocol("WM_DELETE_WINDOW", self._close_vocab_window)
+
+        frame = tk.Frame(window, bg="#f8fafc", padx=14, pady=12)
+        frame.pack(fill="both", expand=True)
+
+        self.vocab_vars = {
+            "bank": tk.StringVar(value=self.word_banks[self.vocab_bank_id]["label"]),
+            "word": tk.StringVar(value=""),
+            "phonetic": tk.StringVar(value=""),
+            "meaning": tk.StringVar(value=""),
+            "example": tk.StringVar(value=""),
+            "progress": tk.StringVar(value=""),
+        }
+
+        bank_labels = [self.word_banks[bank_id]["label"] for bank_id in self.word_banks]
+        bank_combo = ttk.Combobox(
+            frame,
+            textvariable=self.vocab_vars["bank"],
+            values=bank_labels,
+            width=18,
+            state="readonly",
+        )
+        bank_combo.grid(row=0, column=0, columnspan=3, sticky="ew")
+        bank_combo.bind("<<ComboboxSelected>>", self._on_vocab_bank_changed)
+
+        tk.Label(
+            frame,
+            textvariable=self.vocab_vars["word"],
+            bg="#f8fafc",
+            fg="#0f172a",
+            font=("Segoe UI", 18, "bold"),
+            pady=6,
+        ).grid(row=1, column=0, columnspan=3, sticky="ew")
+        tk.Label(
+            frame,
+            textvariable=self.vocab_vars["phonetic"],
+            bg="#f8fafc",
+            fg="#64748b",
+            font=("Segoe UI", 10),
+        ).grid(row=2, column=0, columnspan=3, sticky="ew")
+        tk.Label(
+            frame,
+            textvariable=self.vocab_vars["meaning"],
+            bg="#f8fafc",
+            fg="#9a3412",
+            font=("Microsoft YaHei UI", 10, "bold"),
+            wraplength=260,
+            justify="center",
+            pady=5,
+        ).grid(row=3, column=0, columnspan=3, sticky="ew")
+        tk.Label(
+            frame,
+            textvariable=self.vocab_vars["example"],
+            bg="#f8fafc",
+            fg="#334155",
+            font=("Segoe UI", 9),
+            wraplength=260,
+            justify="center",
+            pady=4,
+        ).grid(row=4, column=0, columnspan=3, sticky="ew")
+        tk.Label(
+            frame,
+            textvariable=self.vocab_vars["progress"],
+            bg="#f8fafc",
+            fg="#64748b",
+            font=("Microsoft YaHei UI", 8),
+        ).grid(row=5, column=0, columnspan=3, sticky="ew", pady=(0, 6))
+
+        tk.Button(frame, text="不认识", command=lambda: self._rate_vocab(False), width=8).grid(row=6, column=0, padx=3)
+        tk.Button(frame, text="下一个", command=self._next_vocab_word, width=8).grid(row=6, column=1, padx=3)
+        tk.Button(frame, text="认识", command=lambda: self._rate_vocab(True), width=8).grid(row=6, column=2, padx=3)
+        tk.Button(frame, text="显示/隐藏释义", command=self._toggle_vocab_answer, width=26).grid(
+            row=7, column=0, columnspan=3, sticky="ew", pady=(8, 0)
+        )
+
+        self._next_vocab_word()
+        window.update_idletasks()
+        width = window.winfo_width()
+        height = window.winfo_height()
+        current_x, current_y = self._current_window_position()
+        x = max(0, current_x - width - 14)
+        y = max(0, current_y)
+        if x == 0:
+            x = min(window.winfo_screenwidth() - width, current_x + self.width + 14)
+        window.geometry(f"{width}x{height}+{x}+{y}")
+
+    def _close_vocab_window(self):
+        if self.vocab_window:
+            try:
+                self.vocab_window.destroy()
+            except tk.TclError:
+                pass
+            self.vocab_window = None
+        self._save_settings()
+
+    def _on_vocab_bank_changed(self, event=None):
+        label = self.vocab_vars["bank"].get()
+        for bank_id, bank in self.word_banks.items():
+            if bank["label"] == label:
+                self.vocab_bank_id = bank_id
+                break
+        self._save_settings()
+        self._next_vocab_word()
+
+    def _vocab_record(self, bank_id, word):
+        bank_progress = self.vocab_progress.setdefault(bank_id, {})
+        return bank_progress.setdefault(
+            word,
+            {"known": 0, "missed": 0, "seen": 0, "streak": 0, "last": 0},
+        )
+
+    def _pick_vocab_word(self):
+        words = self.word_banks[self.vocab_bank_id]["words"]
+        scored = []
+        for item in words:
+            record = self._vocab_record(self.vocab_bank_id, item["word"])
+            score = record.get("known", 0) - record.get("missed", 0) * 2 + record.get("streak", 0)
+            scored.append((score, random.random(), item))
+        scored.sort(key=lambda value: (value[0], value[1]))
+        pool_size = max(3, min(len(scored), len(scored) // 2 or 1))
+        return random.choice(scored[:pool_size])[2]
+
+    def _next_vocab_word(self):
+        if not self.word_banks:
+            return
+        self.current_vocab_word = self._pick_vocab_word()
+        self.current_vocab_answer_visible = True
+        self._refresh_vocab_card()
+
+    def _refresh_vocab_card(self):
+        if not self.current_vocab_word or not self.vocab_vars:
+            return
+        item = self.current_vocab_word
+        record = self._vocab_record(self.vocab_bank_id, item["word"])
+        total = len(self.word_banks[self.vocab_bank_id]["words"])
+        learned = sum(
+            1
+            for data in self.vocab_progress.get(self.vocab_bank_id, {}).values()
+            if data.get("known", 0) > data.get("missed", 0)
+        )
+        self.vocab_vars["word"].set(item.get("word", ""))
+        self.vocab_vars["phonetic"].set(item.get("phonetic", ""))
+        if self.current_vocab_answer_visible:
+            self.vocab_vars["meaning"].set(item.get("meaning", ""))
+            self.vocab_vars["example"].set(item.get("example", ""))
+        else:
+            self.vocab_vars["meaning"].set("点击“显示/隐藏释义”查看答案")
+            self.vocab_vars["example"].set("")
+        self.vocab_vars["progress"].set(
+            f"{self.word_banks[self.vocab_bank_id]['label']} · 已掌握 {learned}/{total} · 当前见过 {record.get('seen', 0)} 次"
+        )
+
+    def _toggle_vocab_answer(self):
+        self.current_vocab_answer_visible = not self.current_vocab_answer_visible
+        self._refresh_vocab_card()
+
+    def _rate_vocab(self, known):
+        if not self.current_vocab_word:
+            return
+        record = self._vocab_record(self.vocab_bank_id, self.current_vocab_word["word"])
+        record["seen"] = record.get("seen", 0) + 1
+        record["last"] = int(time.time())
+        if known:
+            record["known"] = record.get("known", 0) + 1
+            record["streak"] = record.get("streak", 0) + 1
+            self.encourage_text = "记住啦"
+        else:
+            record["missed"] = record.get("missed", 0) + 1
+            record["streak"] = 0
+            self.encourage_text = "再看一眼"
+        self.encourage_until = time.monotonic() + 1.6
+        self._save_settings()
+        self._next_vocab_word()
 
     def _current_window_position(self):
         x = self.window_x if self.window_x is not None else self.root.winfo_x()

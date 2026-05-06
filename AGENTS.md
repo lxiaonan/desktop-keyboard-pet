@@ -31,6 +31,8 @@ Non-goals for now:
 ├─ assets/
 │  └─ skins/
 │     └─ panda/
+│  └─ vocab/
+│     └─ word_banks.json
 ├─ README.md
 ├─ AGENTS.md
 ├─ requirements.txt
@@ -45,6 +47,7 @@ Important files:
 - `src/keyboard_pet.py`: main application logic.
 - `assets/skins/panda`: active panda skin and animation frames.
 - `assets/skins/panda/skin.json`: skin metadata.
+- `assets/vocab/word_banks.json`: built-in starter vocabulary banks.
 - `README.md`: bilingual user-facing documentation.
 - `requirements.txt`: runtime Python dependencies.
 - `build_exe.ps1`: PyInstaller build script.
@@ -137,6 +140,10 @@ Do not leave startup enabled during automated tests unless the user explicitly a
   - Water reminder every 30 minutes.
   - Movement reminder every 60 minutes.
   - Popup auto-closes after 1 minute or closes on confirmation.
+- Vocabulary flashcards from right-click/tray menu:
+  - Banks: junior high, senior high, CET-4, CET-6, IELTS.
+  - Tracks known/unknown counts in settings.
+  - Built-in data is a starter set, not full official word lists.
 - System tray menu via `pystray`.
 - Optional startup on login via current-user Windows Run registry key.
 - Persistent settings stored at `%APPDATA%\KeyboardPet\settings.json`.
@@ -193,6 +200,8 @@ Current settings shape:
   "reminders": true,
   "water_reminder_remaining": 1800,
   "move_reminder_remaining": 3600,
+  "vocab_bank": "junior",
+  "vocab_progress": {},
   "x": 1761,
   "y": 848
 }
@@ -252,6 +261,41 @@ Asset rules:
 - When regenerating assets, update the active skin directory.
 - Keep PNG assets reasonably small; avoid committing generated build outputs.
 
+## Vocabulary Contract
+
+Vocabulary data lives at:
+
+```text
+assets/vocab/word_banks.json
+```
+
+Top-level shape:
+
+```json
+{
+  "junior": {
+    "label": "初中英语库",
+    "words": [
+      {
+        "word": "apple",
+        "phonetic": "/ˈæpəl/",
+        "meaning": "n. 苹果",
+        "example": "I eat an apple every day."
+      }
+    ]
+  }
+}
+```
+
+Rules:
+
+- Keep JSON UTF-8.
+- Keep `word` and `meaning` required.
+- `phonetic` and `example` are optional but recommended.
+- Current banks are starter/sample banks. Do not claim they are complete official exam lists unless full licensed data is added.
+- Progress is stored in `%APPDATA%\KeyboardPet\settings.json` under `vocab_progress`.
+- Do not store personal study content outside local settings unless the user explicitly asks.
+
 ## Coding Guidelines
 
 - Prefer small, focused changes.
@@ -263,6 +307,7 @@ Asset rules:
 - Keep input handling local-only. Do not read, log, save, or upload typed text.
 - Keep `README.md` synchronized with user-facing behavior.
 - Keep this `AGENTS.md` synchronized with developer-facing behavior.
+- When adding or changing word banks, update both README and this file.
 
 ## Privacy And Safety Rules
 
@@ -319,6 +364,7 @@ Do not commit:
 - Repeated `run_silent.bat` launches created multiple pandas. A Windows named mutex now enforces single instance.
 - Tray support requires `pystray`; keep it in `requirements.txt` and `build_exe.ps1`.
 - Root-level asset duplicates made the repo noisy. Only keep active skin assets under `assets/skins/panda`.
+- Vocabulary banks should be described as starter data unless complete licensed word lists are added.
 
 ## Future Ideas
 

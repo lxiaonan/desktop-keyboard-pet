@@ -21,6 +21,7 @@ A lightweight Windows desktop panda pet. It floats on your desktop and reacts to
 - **右键菜单**：在熊猫身上右键可打开常用菜单。
 - **可选音效**：默认关闭。开启后，键盘、鼠标、摸头会有短促提示音。
 - **健康提醒**：默认开启。每 30 分钟提醒喝水，每 1 小时提醒起身活动；弹窗会保留 1 分钟，点击确认可立即收起。
+- **摸鱼背单词**：右键菜单和托盘菜单可打开单词闪卡，支持初中、高中、四级、六级、雅思 5 类内置示例词库，并记录认识/不认识进度。
 - **可选开机启动**：使用当前用户 Windows Run 注册表项，不需要管理员权限。
 - **记住设置**：自动保存大小、位置、置顶、音效、避让鼠标、健康提醒设置。
 - **单实例限制**：重复运行 `run_silent.bat` 不会生成多只熊猫。
@@ -41,6 +42,7 @@ A lightweight Windows desktop panda pet. It floats on your desktop and reacts to
 - **Right-click menu**: Right-click the panda to open the common actions menu.
 - **Optional sound effects**: Disabled by default. When enabled, typing, clicking, and petting play short beeps.
 - **Health reminders**: Enabled by default. Reminds you to drink water every 30 minutes and move around every 1 hour. The popup stays for 1 minute or closes when confirmed.
+- **Vocabulary flashcards**: Open from the right-click or tray menu. Includes starter banks for junior high, senior high, CET-4, CET-6, and IELTS, with simple known/unknown progress tracking.
 - **Optional startup on login**: Uses the current user’s Windows Run registry key. Admin permission is not required.
 - **Persistent settings**: Saves size, position, topmost state, sound, cursor avoidance, and health reminder settings.
 - **Single-instance lock**: Running `run_silent.bat` repeatedly will not spawn multiple pandas.
@@ -83,7 +85,7 @@ run_silent.bat
 - **左键点击熊猫**：摸头互动。
 - **左键拖动熊猫**：移动位置。
 - **右键点击熊猫**：打开菜单。
-- **托盘图标**：打开托盘菜单，可显示/隐藏、切换健康提醒或退出。
+- **托盘图标**：打开托盘菜单，可显示/隐藏、打开摸鱼背单词、切换健康提醒或退出。
 - **鼠标悬停**：触发悬停互动；如果避让鼠标开启，停留一小会儿后熊猫会轻轻移开。
 
 ### English
@@ -91,7 +93,7 @@ run_silent.bat
 - **Left-click the panda**: Petting interaction.
 - **Left-drag the panda**: Move it.
 - **Right-click the panda**: Open the menu.
-- **Tray icon**: Open the tray menu, show/hide, toggle health reminders, or exit.
+- **Tray icon**: Open the tray menu, show/hide, open vocabulary flashcards, toggle health reminders, or exit.
 - **Hover the cursor**: Triggers hover interaction; if cursor avoidance is enabled, the panda gently moves away after a short delay.
 
 ## 菜单说明 / Menu Items
@@ -107,6 +109,7 @@ run_silent.bat
 - **音效**：开启/关闭短促提示音，默认关闭。
 - **避让鼠标**：开启/关闭鼠标靠近时轻微移开，默认开启。
 - **健康提醒**：开启/关闭喝水和活动提醒，默认开启。
+- **摸鱼背单词**：打开单词闪卡窗口，可选择词库并标记认识/不认识。
 - **回到右下角**：把熊猫放回屏幕右下角。
 - **退出**：关闭程序和托盘图标。
 
@@ -121,6 +124,7 @@ run_silent.bat
 - **Sound**: Toggle short beep effects. Disabled by default.
 - **Avoid Cursor**: Toggle gentle cursor avoidance. Enabled by default.
 - **Health Reminders**: Toggle water and movement reminders. Enabled by default.
+- **Vocabulary**: Open the flashcard window, choose a bank, and mark words as known/unknown.
 - **Reset Position**: Move the panda back to the bottom-right corner.
 - **Exit**: Close the app and tray icon.
 
@@ -147,6 +151,8 @@ Saved values include:
   "reminders": true,
   "water_reminder_remaining": 1800,
   "move_reminder_remaining": 3600,
+  "vocab_bank": "junior",
+  "vocab_progress": {},
   "x": 1761,
   "y": 848
 }
@@ -200,6 +206,43 @@ assets\skins\panda\skin.json
 当前程序默认加载 `panda` 皮肤。后续如果要添加更多角色，可以按同样结构创建新的皮肤目录，再扩展 `skin_path()` 或加载配置。
 
 The app currently loads the `panda` skin by default. To add more characters later, create another skin folder with the same structure and extend `skin_path()` or add a skin selector.
+
+## 词库结构 / Vocabulary Banks
+
+内置词库位于：
+
+Built-in word banks are stored at:
+
+```text
+assets\vocab\word_banks.json
+```
+
+当前提供 5 类示例词库：
+
+The current starter banks are:
+
+- `junior`: 初中英语库
+- `senior`: 高中英语库
+- `cet4`: 四级词库
+- `cet6`: 六级词库
+- `ielts`: 雅思词库
+
+每个单词条目格式：
+
+Word item format:
+
+```json
+{
+  "word": "example",
+  "phonetic": "/ɪɡˈzæmpəl/",
+  "meaning": "n. 例子",
+  "example": "This is an example."
+}
+```
+
+这些是可运行的 starter banks，不是完整官方词库。后续可以直接扩展 `word_banks.json`，程序会自动读取新增单词。
+
+These are runnable starter banks, not full official exam word lists. You can extend `word_banks.json` directly, and the app will load the added words automatically.
 
 ## 打包成 EXE / Build EXE
 

@@ -1,6 +1,6 @@
 {
   "junior": {
-    "label": "?????",
+    "label": "初中英语库",
     "source": "ECDICT",
     "license": "MIT",
     "words": [
@@ -9625,7 +9625,7 @@
     ]
   },
   "senior": {
-    "label": "?????",
+    "label": "高中英语库",
     "source": "ECDICT",
     "license": "MIT",
     "words": [
@@ -31694,7 +31694,7 @@
     ]
   },
   "cet4": {
-    "label": "????",
+    "label": "四级词库",
     "source": "ECDICT",
     "license": "MIT",
     "words": [
@@ -54795,7 +54795,7 @@
     ]
   },
   "cet6": {
-    "label": "????",
+    "label": "六级词库",
     "source": "ECDICT",
     "license": "MIT",
     "words": [
@@ -87244,7 +87244,7 @@
     ]
   },
   "ielts": {
-    "label": "????",
+    "label": "雅思词库",
     "source": "ECDICT",
     "license": "MIT",
     "words": [

@@ -21,7 +21,7 @@ A lightweight Windows desktop panda pet. It floats on your desktop and reacts to
 - **右键菜单**：在熊猫身上右键可打开常用菜单。
 - **可选音效**：默认关闭。开启后，键盘、鼠标、摸头会有短促提示音。
 - **健康提醒**：默认开启。每 30 分钟提醒喝水，每 1 小时提醒起身活动；弹窗会保留 1 分钟，点击确认可立即收起。
-- **摸鱼背单词**：右键菜单和托盘菜单可打开单词闪卡，支持初中、高中、四级、六级、雅思 5 类内置示例词库，并记录认识/不认识进度。
+- **摸鱼背单词**：右键菜单和托盘菜单可打开单词闪卡，支持初中、高中、四级、六级、雅思 5 类内置完整词库，并记录认识/不认识进度。
 - **可选开机启动**：使用当前用户 Windows Run 注册表项，不需要管理员权限。
 - **记住设置**：自动保存大小、位置、置顶、音效、避让鼠标、健康提醒设置。
 - **单实例限制**：重复运行 `run_silent.bat` 不会生成多只熊猫。
@@ -42,7 +42,7 @@ A lightweight Windows desktop panda pet. It floats on your desktop and reacts to
 - **Right-click menu**: Right-click the panda to open the common actions menu.
 - **Optional sound effects**: Disabled by default. When enabled, typing, clicking, and petting play short beeps.
 - **Health reminders**: Enabled by default. Reminds you to drink water every 30 minutes and move around every 1 hour. The popup stays for 1 minute or closes when confirmed.
-- **Vocabulary flashcards**: Open from the right-click or tray menu. Includes starter banks for junior high, senior high, CET-4, CET-6, and IELTS, with simple known/unknown progress tracking.
+- **Vocabulary flashcards**: Open from the right-click or tray menu. Includes full built-in banks for junior high, senior high, CET-4, CET-6, and IELTS, with simple known/unknown progress tracking.
 - **Optional startup on login**: Uses the current user’s Windows Run registry key. Admin permission is not required.
 - **Persistent settings**: Saves size, position, topmost state, sound, cursor avoidance, and health reminder settings.
 - **Single-instance lock**: Running `run_silent.bat` repeatedly will not spawn multiple pandas.
@@ -217,15 +217,15 @@ Built-in word banks are stored at:
 assets\vocab\word_banks.json
 ```
 
-当前提供 5 类示例词库：
+当前提供 5 类内置词库：
 
-The current starter banks are:
+The current built-in banks are:
 
-- `junior`: 初中英语库
-- `senior`: 高中英语库
-- `cet4`: 四级词库
-- `cet6`: 六级词库
-- `ielts`: 雅思词库
+- `junior`: 初中英语库，约 1603 词
+- `senior`: 高中英语库，约 3677 词
+- `cet4`: 四级词库，约 3849 词
+- `cet6`: 六级词库，约 5407 词
+- `ielts`: 雅思词库，约 5040 词
 
 每个单词条目格式：
 
@@ -240,9 +240,9 @@ Word item format:
 }
 ```
 
-这些是可运行的 starter banks，不是完整官方词库。后续可以直接扩展 `word_banks.json`，程序会自动读取新增单词。
+当前词库从开源项目 **ECDICT** 导入，并按标签筛选生成，许可证为 **MIT**。它们适合本地学习和程序演示，但不应宣称为官方考试机构发布的标准词表。
 
-These are runnable starter banks, not full official exam word lists. You can extend `word_banks.json` directly, and the app will load the added words automatically.
+The current banks are imported from the open-source **ECDICT** project and filtered by tags, under the **MIT** license. They work well for local study and app usage, but should not be described as official exam-authority word lists.
 
 ## 打包成 EXE / Build EXE
 

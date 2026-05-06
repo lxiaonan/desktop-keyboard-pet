@@ -142,8 +142,9 @@ Do not leave startup enabled during automated tests unless the user explicitly a
   - Popup auto-closes after 1 minute or closes on confirmation.
 - Vocabulary flashcards from right-click/tray menu:
   - Banks: junior high, senior high, CET-4, CET-6, IELTS.
+  - Current counts: junior 1603, senior 3677, CET-4 3849, CET-6 5407, IELTS 5040.
   - Tracks known/unknown counts in settings.
-  - Built-in data is a starter set, not full official word lists.
+  - Built-in data is imported from ECDICT and filtered by tags.
 - System tray menu via `pystray`.
 - Optional startup on login via current-user Windows Run registry key.
 - Persistent settings stored at `%APPDATA%\KeyboardPet\settings.json`.
@@ -292,7 +293,14 @@ Rules:
 - Keep JSON UTF-8.
 - Keep `word` and `meaning` required.
 - `phonetic` and `example` are optional but recommended.
-- Current banks are starter/sample banks. Do not claim they are complete official exam lists unless full licensed data is added.
+- Current banks are generated from ECDICT tag filters:
+  - `zk` -> `junior`
+  - `gk` -> `senior`
+  - `cet4` -> `cet4`
+  - `cet6` -> `cet6`
+  - `ielts` -> `ielts`
+- ECDICT is MIT-licensed; preserve attribution in docs when describing the source.
+- Do not describe these imported banks as official exam authority word lists.
 - Progress is stored in `%APPDATA%\KeyboardPet\settings.json` under `vocab_progress`.
 - Do not store personal study content outside local settings unless the user explicitly asks.
 
@@ -364,7 +372,7 @@ Do not commit:
 - Repeated `run_silent.bat` launches created multiple pandas. A Windows named mutex now enforces single instance.
 - Tray support requires `pystray`; keep it in `requirements.txt` and `build_exe.ps1`.
 - Root-level asset duplicates made the repo noisy. Only keep active skin assets under `assets/skins/panda`.
-- Vocabulary banks should be described as starter data unless complete licensed word lists are added.
+- Vocabulary quality improved after switching from tiny starter data to full MIT-licensed ECDICT imports filtered by tags.
 
 ## Future Ideas
 

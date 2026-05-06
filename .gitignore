@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+.venv/
+venv/
+env/
+
+build/
+dist/
+*.spec
+
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+*.log
+
+# Local user state is stored outside the repo at %APPDATA%\KeyboardPet.

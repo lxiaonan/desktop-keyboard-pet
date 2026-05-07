@@ -75,6 +75,10 @@ def user_vocab_example_path():
     return user_data_dir() / "word_banks.example.json"
 
 
+def local_dev_vocab_path():
+    return vocab_path("word_banks.json")
+
+
 def config_path():
     return user_data_dir() / "settings.json"
 
@@ -514,6 +518,8 @@ class PetApp:
 
     def _load_word_banks(self):
         path = user_vocab_path()
+        if not path.exists() and not getattr(sys, "frozen", False):
+            path = local_dev_vocab_path()
         try:
             with path.open("r", encoding="utf-8") as file:
                 banks = json.load(file)
@@ -888,7 +894,7 @@ class PetApp:
             example_path = self._write_vocab_example()
             messagebox.showwarning(
                 "摸鱼背单词",
-                f"没有找到可用词库。\n\n请创建词库文件：\n{user_vocab_path()}\n\n格式可参考示例：\n{example_path}",
+                f"没有找到可用词库。\n\n正式使用请创建：\n{user_vocab_path()}\n\n源码运行也可以放在：\n{local_dev_vocab_path()}\n\n格式可参考示例：\n{example_path}",
             )
             return
 

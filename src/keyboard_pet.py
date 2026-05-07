@@ -61,10 +61,22 @@ def vocab_path(*parts):
     return resource_path("assets", "vocab", *parts)
 
 
-def config_path():
+def user_data_dir():
     app_data = os.environ.get("APPDATA")
     base = Path(app_data) if app_data else Path.home()
-    return base / "KeyboardPet" / "settings.json"
+    return base / "KeyboardPet"
+
+
+def user_vocab_path():
+    return user_data_dir() / "word_banks.json"
+
+
+def user_vocab_example_path():
+    return user_data_dir() / "word_banks.example.json"
+
+
+def config_path():
+    return user_data_dir() / "settings.json"
 
 
 def startup_command():
@@ -501,7 +513,7 @@ class PetApp:
         return frames
 
     def _load_word_banks(self):
-        path = vocab_path("word_banks.json")
+        path = user_vocab_path()
         try:
             with path.open("r", encoding="utf-8") as file:
                 banks = json.load(file)
@@ -526,6 +538,36 @@ class PetApp:
                     "words": clean_words,
                 }
         return clean_banks
+
+    def _write_vocab_example(self):
+        example_path = user_vocab_example_path()
+        if example_path.exists():
+            return example_path
+        sample = {
+            "custom": {
+                "label": "我的词库",
+                "words": [
+                    {
+                        "word": "apple",
+                        "phonetic": "/ˈæpəl/",
+                        "meaning": "n. 苹果",
+                        "example": "I eat an apple every day.",
+                    },
+                    {
+                        "word": "focus",
+                        "phonetic": "/ˈfoʊkəs/",
+                        "meaning": "v. 集中注意力；n. 焦点",
+                        "example": "I need to focus on this task.",
+                    },
+                ],
+            }
+        }
+        try:
+            example_path.parent.mkdir(parents=True, exist_ok=True)
+            example_path.write_text(json.dumps(sample, ensure_ascii=False, indent=2), encoding="utf-8")
+        except OSError:
+            pass
+        return example_path
 
     def _load_care_stats(self):
         data = self.settings.get("care_stats", {})
@@ -843,7 +885,11 @@ class PetApp:
             self.vocab_window.lift()
             return
         if not self.word_banks:
-            messagebox.showwarning("摸鱼背单词", "没有找到可用词库。")
+            example_path = self._write_vocab_example()
+            messagebox.showwarning(
+                "摸鱼背单词",
+                f"没有找到可用词库。\n\n请创建词库文件：\n{user_vocab_path()}\n\n格式可参考示例：\n{example_path}",
+            )
             return
 
         window = tk.Toplevel(self.root)

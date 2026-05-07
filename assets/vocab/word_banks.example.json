@@ -1,0 +1,30 @@
+{
+  "junior": {
+    "label": "初中英语库",
+    "words": [
+      {
+        "word": "apple",
+        "phonetic": "/ˈæpəl/",
+        "meaning": "n. 苹果",
+        "example": "I eat an apple every day."
+      },
+      {
+        "word": "book",
+        "phonetic": "/bʊk/",
+        "meaning": "n. 书",
+        "example": "This book is useful."
+      }
+    ]
+  },
+  "custom": {
+    "label": "我的词库",
+    "words": [
+      {
+        "word": "focus",
+        "phonetic": "/ˈfoʊkəs/",
+        "meaning": "v. 集中注意力；n. 焦点",
+        "example": "I need to focus on this task."
+      }
+    ]
+  }
+}

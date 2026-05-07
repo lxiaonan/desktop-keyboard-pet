@@ -32,8 +32,9 @@ Non-goals for now:
 │  └─ skins/
 │     └─ panda/
 │  └─ vocab/
-│     └─ word_banks.json
+│     └─ word_banks.example.json
 ├─ README.md
+├─ README_EN.md
 ├─ AGENTS.md
 ├─ requirements.txt
 ├─ run.bat
@@ -47,8 +48,9 @@ Important files:
 - `src/keyboard_pet.py`: main application logic.
 - `assets/skins/panda`: active panda skin and animation frames.
 - `assets/skins/panda/skin.json`: skin metadata.
-- `assets/vocab/word_banks.json`: built-in starter vocabulary banks.
-- `README.md`: bilingual user-facing documentation.
+- `assets/vocab/word_banks.example.json`: vocabulary format example only; real word banks are user-provided.
+- `README.md`: Chinese user-facing documentation.
+- `README_EN.md`: English user-facing documentation.
 - `requirements.txt`: runtime Python dependencies.
 - `build_exe.ps1`: PyInstaller build script.
 - `run.bat`: run with a console window.
@@ -146,10 +148,10 @@ Do not leave startup enabled during automated tests unless the user explicitly a
   - Movement reminder every 60 minutes.
   - Popup auto-closes after 1 minute or closes on confirmation.
 - Vocabulary flashcards from right-click/tray menu:
-  - Banks: junior high, senior high, CET-4, CET-6, IELTS.
-  - Current counts: junior 1603, senior 3677, CET-4 3849, CET-6 5407, IELTS 5040.
+  - Real vocabulary banks are not committed to the repository.
+  - Users create `%APPDATA%\KeyboardPet\word_banks.json`.
+  - `assets/vocab/word_banks.example.json` documents the expected format.
   - Tracks known/unknown counts in settings.
-  - Built-in data is imported from ECDICT and filtered by tags.
 - System tray menu via `pystray`.
 - Optional startup on login via current-user Windows Run registry key.
 - Persistent settings stored at `%APPDATA%\KeyboardPet\settings.json`.
@@ -278,10 +280,16 @@ Asset rules:
 
 ## Vocabulary Contract
 
-Vocabulary data lives at:
+Vocabulary data is user-provided and should live at:
 
 ```text
-assets/vocab/word_banks.json
+%APPDATA%\KeyboardPet\word_banks.json
+```
+
+The repository only keeps this format example:
+
+```text
+assets/vocab/word_banks.example.json
 ```
 
 Top-level shape:
@@ -307,14 +315,8 @@ Rules:
 - Keep JSON UTF-8.
 - Keep `word` and `meaning` required.
 - `phonetic` and `example` are optional but recommended.
-- Current banks are generated from ECDICT tag filters:
-  - `zk` -> `junior`
-  - `gk` -> `senior`
-  - `cet4` -> `cet4`
-  - `cet6` -> `cet6`
-  - `ielts` -> `ielts`
-- ECDICT is MIT-licensed; preserve attribution in docs when describing the source.
-- Do not describe these imported banks as official exam authority word lists.
+- Do not commit full vocabulary banks to the repository unless the user explicitly asks and the data license is clear.
+- Do not describe user-provided banks as official exam authority word lists unless they truly are and redistribution is permitted.
 - Progress is stored in `%APPDATA%\KeyboardPet\settings.json` under `vocab_progress`.
 - Do not store personal study content outside local settings unless the user explicitly asks.
 
@@ -329,7 +331,7 @@ Rules:
 - Keep input handling local-only. Do not read, log, save, or upload typed text.
 - Keep `README.md` synchronized with user-facing behavior.
 - Keep this `AGENTS.md` synchronized with developer-facing behavior.
-- When adding or changing word banks, update both README and this file.
+- When changing the vocabulary format, update README, README_EN, the example JSON, and this file.
 - Care defaults should remain lightweight and friendly; avoid overcomplicating the progression loop unless explicitly requested.
 
 ## Privacy And Safety Rules
@@ -371,6 +373,7 @@ Do not commit:
 - `build/`
 - `dist/`
 - `*.spec`
+- `assets/vocab/word_banks.json`
 - local logs
 - local user settings
 
@@ -387,7 +390,7 @@ Do not commit:
 - Repeated `run_silent.bat` launches created multiple pandas. A Windows named mutex now enforces single instance.
 - Tray support requires `pystray`; keep it in `requirements.txt` and `build_exe.ps1`.
 - Root-level asset duplicates made the repo noisy. Only keep active skin assets under `assets/skins/panda`.
-- Vocabulary quality improved after switching from tiny starter data to full MIT-licensed ECDICT imports filtered by tags.
+- Full vocabulary banks were once committed directly. The current policy is to keep only a small format example and let users provide local word banks.
 
 ## Future Ideas
 

@@ -5,6 +5,7 @@ $watchPaths = @(
     (Join-Path $PSScriptRoot "src"),
     (Join-Path $PSScriptRoot "assets"),
     (Join-Path $PSScriptRoot "README.md"),
+    (Join-Path $PSScriptRoot "README_EN.md"),
     (Join-Path $PSScriptRoot "AGENTS.md"),
     (Join-Path $PSScriptRoot "requirements.txt")
 )
@@ -37,6 +38,9 @@ foreach ($path in $watchPaths) {
     $watchers += $watcher
 
     $action = {
+        if ($Event.SourceEventArgs.FullPath -like "*\assets\vocab\word_banks.json") {
+            return
+        }
         $script:pendingBuild = $true
         $script:lastEventAt = Get-Date
     }

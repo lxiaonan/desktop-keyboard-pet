@@ -319,6 +319,24 @@ Build command:
 .\build_exe.ps1
 ```
 
+自动监听并重新打包：
+
+Auto-watch and rebuild:
+
+```powershell
+.\watch_build.ps1
+```
+
+或双击：
+
+Or double-click:
+
+```bat
+watch_build.bat
+```
+
+它会监听 `src`、`assets`、`README.md`、`AGENTS.md`、`requirements.txt`，检测到变更后自动重新生成 `dist\KeyboardPet.exe`。
+
 生成文件：
 
 Generated file:

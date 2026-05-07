@@ -277,6 +277,9 @@ class PetApp:
         self.rest_window = None
         self.rest_progress = None
         self.rest_after_id = None
+        self.care_action = None
+        self.care_action_until = 0.0
+        self.care_action_started_at = 0.0
 
         self._make_menu()
         self._bind_window()
@@ -681,6 +684,7 @@ class PetApp:
             self.encourage_until = time.monotonic() + 2.0
 
     def _feed_pet(self):
+        self._start_care_action("feed", 2.2)
         self._clamp_stat("fullness", 18)
         self._clamp_stat("mood", 6)
         self._clamp_stat("energy", 4)
@@ -762,6 +766,7 @@ class PetApp:
             return
         self.bath_progress["value"] = value
         if value >= 100:
+            self._start_care_action("bath", 3.0)
             self._clamp_stat("cleanliness", 30)
             self._clamp_stat("mood", 10)
             self._gain_bond(10)
@@ -797,6 +802,7 @@ class PetApp:
             return
         self.rest_progress["value"] = value
         if value >= 100:
+            self._start_care_action("rest", 3.6)
             self._clamp_stat("energy", 26)
             self._clamp_stat("mood", 8)
             self._gain_bond(5)
@@ -819,6 +825,12 @@ class PetApp:
                 pass
             self.rest_window = None
             self.rest_progress = None
+
+    def _start_care_action(self, action, duration):
+        now = time.monotonic()
+        self.care_action = action
+        self.care_action_started_at = now
+        self.care_action_until = now + duration
 
     def _open_vocab_window(self):
         if self.vocab_window and self.vocab_window.winfo_exists():
@@ -1260,6 +1272,8 @@ class PetApp:
 
     def _active_animation(self):
         now = time.monotonic()
+        if self.care_action and now < self.care_action_until:
+            return "idle"
         if now < self.pet_until:
             return "pet"
         if self.mouse_down["left"] or (now < self.click_until and self.last_click_button == "left"):
@@ -1330,9 +1344,56 @@ class PetApp:
 
         self.canvas.delete("all")
         self.canvas.create_image(self.width / 2, self.top_pad + lift, image=self.current_image, anchor="n")
+        self._draw_care_action_overlay()
         self._draw_care_feedback()
         self._draw_gaze()
         self._draw_encouragement()
+
+    def _draw_care_action_overlay(self):
+        if not self.care_action or time.monotonic() >= self.care_action_until:
+            self.care_action = None
+            return
+
+        elapsed = time.monotonic() - self.care_action_started_at
+        s = self.asset_scale
+        x0 = self.side_pad
+        y0 = self.top_pad
+
+        if self.care_action == "feed":
+            bob = math.sin(elapsed * 7.0) * 3.0 * s
+            cx = x0 + 70 * s
+            cy = y0 + 214 * s + bob
+            self.canvas.create_oval(cx - 12 * s, cy - 10 * s, cx + 12 * s, cy + 10 * s, fill="#f59e0b", outline="#b45309", width=max(1, int(1.5 * s)))
+            self.canvas.create_oval(cx - 4 * s, cy - 3 * s, cx + 4 * s, cy + 3 * s, fill="#fde68a", outline="")
+            self.canvas.create_text(x0 + 184 * s, y0 + 36 * s, text="嚼嚼", fill="#92400e", font=("Microsoft YaHei UI", max(8, int(10 * s)), "bold"))
+        elif self.care_action == "bath":
+            phase = int(elapsed / 0.22) % 3
+            for i, (bx, by, r) in enumerate(((58, 184, 13), (116, 165, 10), (198, 176, 14), (236, 202, 11))):
+                wobble = math.sin(elapsed * 5 + i) * 3 * s
+                radius = (r + phase) * s
+                self.canvas.create_oval(
+                    x0 + bx * s - radius + wobble,
+                    y0 + by * s - radius,
+                    x0 + bx * s + radius + wobble,
+                    y0 + by * s + radius,
+                    fill="#dbeafe",
+                    outline="#93c5fd",
+                    width=max(1, int(1.2 * s)),
+                )
+            self.canvas.create_text(x0 + 184 * s, y0 + 34 * s, text="咕噜咕噜", fill="#2563eb", font=("Microsoft YaHei UI", max(8, int(10 * s)), "bold"))
+        elif self.care_action == "rest":
+            y_shift = math.sin(elapsed * 2.2) * 1.0 * s
+            self.canvas.create_text(x0 + 224 * s, y0 + 40 * s + y_shift, text="Zz", fill="#64748b", font=("Segoe UI", max(8, int(10 * s)), "bold"))
+            self.canvas.create_text(x0 + 242 * s, y0 + 25 * s + y_shift, text="z", fill="#94a3b8", font=("Segoe UI", max(7, int(8 * s)), "bold"))
+            self.canvas.create_rectangle(
+                x0 + 84 * s,
+                y0 + 248 * s,
+                x0 + 214 * s,
+                y0 + 260 * s,
+                fill="#e2e8f0",
+                outline="",
+                stipple="gray25",
+            )
 
     def _draw_care_feedback(self):
         stats = self.care_stats

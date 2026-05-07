@@ -136,6 +136,8 @@ Do not leave startup enabled during automated tests unless the user explicitly a
 - Light progression system with mood, energy, cleanliness, fullness, bond, level, and exp.
 - Feeding interaction that raises fullness and restores a bit of mood and energy.
 - Bath window that raises cleanliness, mood, and bond.
+- Rest window that restores energy and a bit of mood.
+- Visual care feedback when cleanliness, fullness, energy, or mood gets low.
 - Typing encouragement bubbles.
 - Optional sound effects via `winsound.Beep`, default off.
 - Optional cursor avoidance, default on.

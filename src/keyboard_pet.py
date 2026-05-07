@@ -274,6 +274,9 @@ class PetApp:
         self.bath_window = None
         self.bath_progress = None
         self.bath_after_id = None
+        self.rest_window = None
+        self.rest_progress = None
+        self.rest_after_id = None
 
         self._make_menu()
         self._bind_window()
@@ -358,6 +361,7 @@ class PetApp:
             variable=self.reminders_enabled,
             command=self._toggle_reminders,
         )
+        self.menu.add_command(label="让熊猫休息", command=self._open_rest_window)
         self.menu.add_command(label="喂零食", command=self._feed_pet)
         self.menu.add_command(label="给熊猫洗澡", command=self._open_bath_window)
         self.menu.add_command(label="摸鱼背单词", command=self._open_vocab_window)
@@ -389,6 +393,7 @@ class PetApp:
                 ),
             ),
             pystray.MenuItem("熊猫状态", after(self._open_care_window)),
+            pystray.MenuItem("让熊猫休息", after(self._open_rest_window)),
             pystray.MenuItem("喂零食", after(self._feed_pet)),
             pystray.MenuItem("给熊猫洗澡", after(self._open_bath_window)),
             pystray.MenuItem("置顶显示", after(self._toggle_topmost_from_tray)),
@@ -633,6 +638,7 @@ class PetApp:
 
         tk.Button(frame, text="喂零食", command=self._feed_pet, width=10).grid(row=6, column=0, padx=(0, 6))
         tk.Button(frame, text="洗澡", command=self._open_bath_window, width=10).grid(row=6, column=1)
+        tk.Button(frame, text="休息", command=self._open_rest_window, width=22).grid(row=7, column=0, columnspan=2, pady=(8, 0))
 
         self._refresh_care_window()
         window.update_idletasks()
@@ -715,6 +721,36 @@ class PetApp:
         y = max(0, current_y)
         window.geometry(f"{width}x{height}+{x}+{y}")
 
+    def _open_rest_window(self):
+        if self.rest_window and self.rest_window.winfo_exists():
+            self.rest_window.deiconify()
+            self.rest_window.lift()
+            return
+
+        window = tk.Toplevel(self.root)
+        self.rest_window = window
+        window.title("让熊猫休息")
+        window.attributes("-topmost", True)
+        window.resizable(False, False)
+        window.configure(bg="#f8fafc")
+        window.protocol("WM_DELETE_WINDOW", self._close_rest_window)
+
+        frame = tk.Frame(window, bg="#f8fafc", padx=16, pady=14)
+        frame.pack(fill="both", expand=True)
+        tk.Label(frame, text="让熊猫打个盹", bg="#f8fafc", fg="#475569", font=("Microsoft YaHei UI", 12, "bold")).pack(anchor="w")
+        tk.Label(frame, text="短暂休息会恢复体力和一点心情。", bg="#f8fafc", fg="#334155", font=("Microsoft YaHei UI", 10), pady=8).pack(anchor="w")
+        self.rest_progress = ttk.Progressbar(frame, orient="horizontal", mode="determinate", maximum=100, length=240)
+        self.rest_progress.pack(fill="x")
+        tk.Button(frame, text="开始休息", command=self._start_rest_sequence, width=12).pack(anchor="e", pady=(10, 0))
+
+        window.update_idletasks()
+        width = window.winfo_width()
+        height = window.winfo_height()
+        current_x, current_y = self._current_window_position()
+        x = min(window.winfo_screenwidth() - width, current_x + self.width + 14)
+        y = max(0, current_y)
+        window.geometry(f"{width}x{height}+{x}+{y}")
+
     def _start_bath_sequence(self):
         if not self.bath_progress:
             return
@@ -749,6 +785,40 @@ class PetApp:
                 pass
             self.bath_window = None
             self.bath_progress = None
+
+    def _start_rest_sequence(self):
+        if not self.rest_progress:
+            return
+        self.rest_progress["value"] = 0
+        self._advance_rest_progress(0)
+
+    def _advance_rest_progress(self, value):
+        if not self.rest_progress or not self.rest_window or not self.rest_window.winfo_exists():
+            return
+        self.rest_progress["value"] = value
+        if value >= 100:
+            self._clamp_stat("energy", 26)
+            self._clamp_stat("mood", 8)
+            self._gain_bond(5)
+            self.encourage_text = "睡醒啦"
+            self.encourage_until = time.monotonic() + 2.0
+            self._refresh_care_window()
+            self._save_settings()
+            self.rest_after_id = self.root.after(600, self._close_rest_window)
+            return
+        self.rest_after_id = self.root.after(180, lambda: self._advance_rest_progress(value + 20))
+
+    def _close_rest_window(self):
+        if self.rest_after_id:
+            self.root.after_cancel(self.rest_after_id)
+            self.rest_after_id = None
+        if self.rest_window:
+            try:
+                self.rest_window.destroy()
+            except tk.TclError:
+                pass
+            self.rest_window = None
+            self.rest_progress = None
 
     def _open_vocab_window(self):
         if self.vocab_window and self.vocab_window.winfo_exists():
@@ -1260,8 +1330,60 @@ class PetApp:
 
         self.canvas.delete("all")
         self.canvas.create_image(self.width / 2, self.top_pad + lift, image=self.current_image, anchor="n")
+        self._draw_care_feedback()
         self._draw_gaze()
         self._draw_encouragement()
+
+    def _draw_care_feedback(self):
+        stats = self.care_stats
+        s = self.asset_scale
+        x0 = self.side_pad
+        y0 = self.top_pad
+
+        if stats["cleanliness"] < 40:
+            dust_alpha = 90 if stats["cleanliness"] < 25 else 55
+            for box in ((50, 214, 66, 228), (204, 222, 220, 236), (138, 250, 154, 264)):
+                x1, y1, x2, y2 = box
+                self.canvas.create_oval(
+                    x0 + x1 * s,
+                    y0 + y1 * s,
+                    x0 + x2 * s,
+                    y0 + y2 * s,
+                    fill="#cbd5e1",
+                    outline="",
+                    stipple="gray25" if dust_alpha < 80 else "gray12",
+                )
+
+        if stats["fullness"] < 38:
+            self.canvas.create_text(
+                x0 + 80 * s,
+                y0 + 34 * s,
+                text="咕...",
+                fill="#92400e",
+                font=("Microsoft YaHei UI", max(8, int(10 * s)), "bold"),
+            )
+
+        if stats["energy"] < 35:
+            self.canvas.create_text(
+                x0 + 232 * s,
+                y0 + 42 * s,
+                text="Zz",
+                fill="#64748b",
+                font=("Segoe UI", max(8, int(9 * s)), "bold"),
+            )
+
+        if stats["mood"] < 35:
+            self.canvas.create_arc(
+                x0 + 126 * s,
+                y0 + 170 * s,
+                x0 + 184 * s,
+                y0 + 194 * s,
+                start=20,
+                extent=140,
+                style="arc",
+                outline="#475569",
+                width=max(1, int(2 * s)),
+            )
 
     def _draw_gaze(self):
         if self._active_animation() != "idle":

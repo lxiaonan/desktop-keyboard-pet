@@ -16,7 +16,8 @@ A lightweight Windows desktop panda pet. It floats on your desktop and reacts to
 - **悬停互动**：鼠标放在熊猫身上会触发脸红和轻微挥手动画。
 - **摸头互动**：左键点击或拖动熊猫时，会触发摸头、脸红、小闪光动画。
 - **轻养成系统**：内置心情、体力、清洁、饱腹、亲密度、等级，状态会随着时间和互动缓慢变化。
-- **喂食和洗澡**：可以喂零食恢复饱腹，也可以给熊猫洗澡提升清洁、心情和亲密度。
+- **喂食、洗澡、休息**：可以喂零食恢复饱腹，给熊猫洗澡提升清洁，也可以主动让它休息恢复体力。
+- **状态可视化反馈**：脏了、饿了、困了、心情差时，熊猫会有对应的小视觉提示。
 - **长时间打字鼓励**：连续输入一段时间后，会偶尔冒出“加油”“写得好快”“注意休息”等小气泡，并避免连续重复同一句。
 - **避让鼠标**：默认开启。鼠标停在熊猫身上一小会儿，它会轻轻挪开。
 - **系统托盘菜单**：托盘图标提供显示/隐藏、大小、置顶、开机启动、音效、避让鼠标、健康提醒、回到右下角、退出。
@@ -39,7 +40,8 @@ A lightweight Windows desktop panda pet. It floats on your desktop and reacts to
 - **Hover interaction**: Hovering over the panda triggers a blush and a subtle waving animation.
 - **Petting interaction**: Clicking or dragging the panda triggers a petting animation with blush and small sparkles.
 - **Light progression system**: Includes mood, energy, cleanliness, fullness, bond, and level, all of which change gradually over time and interaction.
-- **Feeding and bathing**: You can feed snacks to restore fullness, or bathe the panda to improve cleanliness, mood, and bond.
+- **Feeding, bathing, and resting**: Feed snacks to restore fullness, bathe the panda to improve cleanliness, or let it rest to recover energy.
+- **Visible status feedback**: The panda shows small visual hints when it gets dirty, hungry, sleepy, or unhappy.
 - **Typing encouragement**: After sustained typing, the panda occasionally shows short encouragement bubbles.
 - **Cursor avoidance**: Enabled by default. If the cursor rests on the panda for a moment, it gently moves away.
 - **System tray menu**: The tray icon supports show/hide, size, topmost, startup, sound, cursor avoidance, health reminders, reset position, and exit.
@@ -118,6 +120,7 @@ run_silent.bat
 - **熊猫状态**：打开养成状态面板。
 - **喂零食**：提升饱腹，并恢复一点心情和体力。
 - **给熊猫洗澡**：打开洗澡窗口，完成后提升清洁、心情和亲密度。
+- **让熊猫休息**：打开休息窗口，完成后恢复体力和一点心情。
 - **摸鱼背单词**：打开单词闪卡窗口，可选择词库并标记认识/不认识。
 - **回到右下角**：把熊猫放回屏幕右下角。
 - **退出**：关闭程序和托盘图标。
@@ -136,6 +139,7 @@ run_silent.bat
 - **Care Panel**: Open the progression/status panel.
 - **Feed Snack**: Improve fullness and restore a little mood and energy.
 - **Bath**: Open the bath window to improve cleanliness, mood, and bond.
+- **Rest**: Open the rest window to recover energy and a bit of mood.
 - **Vocabulary**: Open the flashcard window, choose a bank, and mark words as known/unknown.
 - **Reset Position**: Move the panda back to the bottom-right corner.
 - **Exit**: Close the app and tray icon.

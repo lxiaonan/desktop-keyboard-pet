@@ -832,6 +832,11 @@ class PetApp:
         self.care_action_started_at = now
         self.care_action_until = now + duration
 
+    def _cancel_care_action(self):
+        self.care_action = None
+        self.care_action_until = 0.0
+        self.care_action_started_at = 0.0
+
     def _open_vocab_window(self):
         if self.vocab_window and self.vocab_window.winfo_exists():
             self.vocab_window.deiconify()
@@ -1053,6 +1058,7 @@ class PetApp:
 
     def _mark_typing(self, vk_code=0):
         now = time.monotonic()
+        self._cancel_care_action()
         if now < self.typing_until - 0.12:
             return
         self.typing_until = now + 0.32
@@ -1083,6 +1089,8 @@ class PetApp:
 
     def _mark_mouse(self, button, pressed):
         now = time.monotonic()
+        if pressed:
+            self._cancel_care_action()
         self.mouse_down[button] = pressed
         if pressed:
             self.last_activity_at = now
@@ -1093,6 +1101,7 @@ class PetApp:
 
     def _mark_pet(self):
         now = time.monotonic()
+        self._cancel_care_action()
         self.pet_started_at = now
         self.pet_until = now + 0.62
         self.last_activity_at = now

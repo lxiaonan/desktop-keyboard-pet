@@ -133,6 +133,9 @@ Do not leave startup enabled during automated tests unless the user explicitly a
 - Idle blink and sleepy animations.
 - Hover interaction with blush/wave frames.
 - Petting interaction with visible head-pat hand, blush, and sparkles.
+- Light progression system with mood, energy, cleanliness, fullness, bond, level, and exp.
+- Feeding interaction that raises fullness and restores a bit of mood and energy.
+- Bath window that raises cleanliness, mood, and bond.
 - Typing encouragement bubbles.
 - Optional sound effects via `winsound.Beep`, default off.
 - Optional cursor avoidance, default on.
@@ -203,6 +206,15 @@ Current settings shape:
   "move_reminder_remaining": 3600,
   "vocab_bank": "junior",
   "vocab_progress": {},
+  "care_stats": {
+    "mood": 72,
+    "energy": 78,
+    "cleanliness": 76,
+    "fullness": 74,
+    "bond": 0,
+    "level": 1,
+    "exp": 0
+  },
   "x": 1761,
   "y": 848
 }
@@ -316,6 +328,7 @@ Rules:
 - Keep `README.md` synchronized with user-facing behavior.
 - Keep this `AGENTS.md` synchronized with developer-facing behavior.
 - When adding or changing word banks, update both README and this file.
+- Care defaults should remain lightweight and friendly; avoid overcomplicating the progression loop unless explicitly requested.
 
 ## Privacy And Safety Rules
 

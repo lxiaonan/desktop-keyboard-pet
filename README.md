@@ -15,6 +15,8 @@ A lightweight Windows desktop panda pet. It floats on your desktop and reacts to
 - **空闲动画**：自动眨眼；长时间没有输入时会进入犯困/睡觉状态。
 - **悬停互动**：鼠标放在熊猫身上会触发脸红和轻微挥手动画。
 - **摸头互动**：左键点击或拖动熊猫时，会触发摸头、脸红、小闪光动画。
+- **轻养成系统**：内置心情、体力、清洁、饱腹、亲密度、等级，状态会随着时间和互动缓慢变化。
+- **喂食和洗澡**：可以喂零食恢复饱腹，也可以给熊猫洗澡提升清洁、心情和亲密度。
 - **长时间打字鼓励**：连续输入一段时间后，会偶尔冒出“加油”“写得好快”“注意休息”等小气泡，并避免连续重复同一句。
 - **避让鼠标**：默认开启。鼠标停在熊猫身上一小会儿，它会轻轻挪开。
 - **系统托盘菜单**：托盘图标提供显示/隐藏、大小、置顶、开机启动、音效、避让鼠标、健康提醒、回到右下角、退出。
@@ -36,6 +38,8 @@ A lightweight Windows desktop panda pet. It floats on your desktop and reacts to
 - **Idle animation**: The panda blinks automatically and becomes sleepy after a period of inactivity.
 - **Hover interaction**: Hovering over the panda triggers a blush and a subtle waving animation.
 - **Petting interaction**: Clicking or dragging the panda triggers a petting animation with blush and small sparkles.
+- **Light progression system**: Includes mood, energy, cleanliness, fullness, bond, and level, all of which change gradually over time and interaction.
+- **Feeding and bathing**: You can feed snacks to restore fullness, or bathe the panda to improve cleanliness, mood, and bond.
 - **Typing encouragement**: After sustained typing, the panda occasionally shows short encouragement bubbles.
 - **Cursor avoidance**: Enabled by default. If the cursor rests on the panda for a moment, it gently moves away.
 - **System tray menu**: The tray icon supports show/hide, size, topmost, startup, sound, cursor avoidance, health reminders, reset position, and exit.
@@ -85,6 +89,7 @@ run_silent.bat
 - **左键点击熊猫**：摸头互动。
 - **左键拖动熊猫**：移动位置。
 - **右键点击熊猫**：打开菜单。
+- **熊猫状态**：查看当前心情、体力、清洁、饱腹、亲密度和等级。
 - **托盘图标**：打开托盘菜单，可显示/隐藏、打开摸鱼背单词、切换健康提醒或退出。
 - **鼠标悬停**：触发悬停互动；如果避让鼠标开启，停留一小会儿后熊猫会轻轻移开。
 
@@ -93,6 +98,7 @@ run_silent.bat
 - **Left-click the panda**: Petting interaction.
 - **Left-drag the panda**: Move it.
 - **Right-click the panda**: Open the menu.
+- **Care panel**: View mood, energy, cleanliness, fullness, bond, and level.
 - **Tray icon**: Open the tray menu, show/hide, open vocabulary flashcards, toggle health reminders, or exit.
 - **Hover the cursor**: Triggers hover interaction; if cursor avoidance is enabled, the panda gently moves away after a short delay.
 
@@ -109,6 +115,9 @@ run_silent.bat
 - **音效**：开启/关闭短促提示音，默认关闭。
 - **避让鼠标**：开启/关闭鼠标靠近时轻微移开，默认开启。
 - **健康提醒**：开启/关闭喝水和活动提醒，默认开启。
+- **熊猫状态**：打开养成状态面板。
+- **喂零食**：提升饱腹，并恢复一点心情和体力。
+- **给熊猫洗澡**：打开洗澡窗口，完成后提升清洁、心情和亲密度。
 - **摸鱼背单词**：打开单词闪卡窗口，可选择词库并标记认识/不认识。
 - **回到右下角**：把熊猫放回屏幕右下角。
 - **退出**：关闭程序和托盘图标。
@@ -124,6 +133,9 @@ run_silent.bat
 - **Sound**: Toggle short beep effects. Disabled by default.
 - **Avoid Cursor**: Toggle gentle cursor avoidance. Enabled by default.
 - **Health Reminders**: Toggle water and movement reminders. Enabled by default.
+- **Care Panel**: Open the progression/status panel.
+- **Feed Snack**: Improve fullness and restore a little mood and energy.
+- **Bath**: Open the bath window to improve cleanliness, mood, and bond.
 - **Vocabulary**: Open the flashcard window, choose a bank, and mark words as known/unknown.
 - **Reset Position**: Move the panda back to the bottom-right corner.
 - **Exit**: Close the app and tray icon.
@@ -153,6 +165,15 @@ Saved values include:
   "move_reminder_remaining": 3600,
   "vocab_bank": "junior",
   "vocab_progress": {},
+  "care_stats": {
+    "mood": 72,
+    "energy": 78,
+    "cleanliness": 76,
+    "fullness": 74,
+    "bond": 0,
+    "level": 1,
+    "exp": 0
+  },
   "x": 1761,
   "y": 848
 }
@@ -279,6 +300,49 @@ Runtime dependencies are listed in:
 ```text
 requirements.txt
 ```
+
+## 给别人使用 / Sharing With Others
+
+最推荐的方式是直接分发打包好的 `exe`。
+
+The recommended way is to share the packaged `exe`.
+
+打包命令：
+
+Build command:
+
+```powershell
+.\build_exe.ps1
+```
+
+生成文件：
+
+Generated file:
+
+```text
+dist\KeyboardPet.exe
+```
+
+如果你要发给别人，建议提供：
+
+If you want to share it with other people, ship:
+
+- `KeyboardPet.exe`
+- `RELEASE_NOTES_zh-CN.md`
+
+推荐发布目录结构：
+
+Recommended release layout:
+
+```text
+release/
+  KeyboardPet.exe
+  RELEASE_NOTES_zh-CN.md
+```
+
+普通用户不需要安装 Python。
+
+End users do not need to install Python.
 
 ## 隐私和安全 / Privacy & Safety
 

@@ -8,6 +8,7 @@ env/
 
 build/
 dist/
+release/
 *.spec
 
 .pytest_cache/

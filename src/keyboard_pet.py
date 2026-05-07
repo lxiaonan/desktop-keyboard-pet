@@ -36,6 +36,16 @@ WATER_REMINDER_SECONDS = 30 * 60
 MOVE_REMINDER_SECONDS = 60 * 60
 REMINDER_POPUP_SECONDS = 60
 DEFAULT_VOCAB_BANK = "junior"
+DEFAULT_CARE_STATS = {
+    "mood": 72,
+    "energy": 78,
+    "cleanliness": 76,
+    "fullness": 74,
+    "bond": 0,
+    "level": 1,
+    "exp": 0,
+}
+CARE_DECAY_SECONDS = 5 * 60
 
 
 def resource_path(*parts):
@@ -258,6 +268,12 @@ class PetApp:
         self.current_vocab_word = None
         self.current_vocab_answer_visible = True
         self.vocab_vars = {}
+        self.care_stats = self._load_care_stats()
+        self.last_care_tick_at = time.monotonic()
+        self.care_window = None
+        self.bath_window = None
+        self.bath_progress = None
+        self.bath_after_id = None
 
         self._make_menu()
         self._bind_window()
@@ -299,6 +315,7 @@ class PetApp:
             "move_reminder_remaining": max(1, int(self.next_move_reminder_at - time.monotonic())),
             "vocab_bank": self.vocab_bank_id,
             "vocab_progress": self.vocab_progress,
+            "care_stats": self.care_stats,
             "x": self.window_x if self.window_x is not None else self.root.winfo_x(),
             "y": self.window_y if self.window_y is not None else self.root.winfo_y(),
         }
@@ -310,6 +327,7 @@ class PetApp:
 
     def _make_menu(self):
         self.menu = tk.Menu(self.root, tearoff=False)
+        self.menu.add_command(label="熊猫状态", command=self._open_care_window)
         self.menu.add_command(label="迷你大小", command=lambda: self._set_size("mini"))
         self.menu.add_command(label="小一点", command=lambda: self._set_size("small"))
         self.menu.add_command(label="正常大小", command=lambda: self._set_size("normal"))
@@ -340,6 +358,8 @@ class PetApp:
             variable=self.reminders_enabled,
             command=self._toggle_reminders,
         )
+        self.menu.add_command(label="喂零食", command=self._feed_pet)
+        self.menu.add_command(label="给熊猫洗澡", command=self._open_bath_window)
         self.menu.add_command(label="摸鱼背单词", command=self._open_vocab_window)
         self.menu.add_command(label="回到右下角", command=self._place_default)
         self.menu.add_separator()
@@ -368,6 +388,9 @@ class PetApp:
                     pystray.MenuItem("大一点", after(lambda: self._set_size("large"))),
                 ),
             ),
+            pystray.MenuItem("熊猫状态", after(self._open_care_window)),
+            pystray.MenuItem("喂零食", after(self._feed_pet)),
+            pystray.MenuItem("给熊猫洗澡", after(self._open_bath_window)),
             pystray.MenuItem("置顶显示", after(self._toggle_topmost_from_tray)),
             pystray.MenuItem("开机启动", after(self._toggle_startup_from_tray)),
             pystray.MenuItem("音效", after(self._toggle_sound_from_tray)),
@@ -496,6 +519,17 @@ class PetApp:
                 }
         return clean_banks
 
+    def _load_care_stats(self):
+        data = self.settings.get("care_stats", {})
+        if not isinstance(data, dict):
+            data = {}
+        stats = DEFAULT_CARE_STATS.copy()
+        for key in stats:
+            value = data.get(key, stats[key])
+            if isinstance(value, (int, float)):
+                stats[key] = int(value)
+        return stats
+
     def _toggle_topmost(self):
         self.root.attributes("-topmost", self.always_on_top.get())
         self._save_settings()
@@ -540,12 +574,181 @@ class PetApp:
         self.reminders_enabled.set(not self.reminders_enabled.get())
         self._toggle_reminders()
 
+    def _apply_care_decay(self):
+        now = time.monotonic()
+        elapsed = now - self.last_care_tick_at
+        if elapsed < CARE_DECAY_SECONDS:
+            return
+        ticks = int(elapsed // CARE_DECAY_SECONDS)
+        self.last_care_tick_at += ticks * CARE_DECAY_SECONDS
+        self._clamp_stat("fullness", -ticks)
+        self._clamp_stat("cleanliness", -ticks)
+        if self.recent_key_times:
+            self._clamp_stat("energy", -ticks)
+        if self.care_stats["fullness"] < 35 or self.care_stats["cleanliness"] < 35:
+            self._clamp_stat("mood", -ticks)
+        self._refresh_care_window()
+        self._save_settings()
+
     def _toggle_visible(self):
         if self.root.state() == "withdrawn":
             self.root.deiconify()
             self.root.attributes("-topmost", self.always_on_top.get())
         else:
             self.root.withdraw()
+
+    def _open_care_window(self):
+        if self.care_window and self.care_window.winfo_exists():
+            self.care_window.deiconify()
+            self.care_window.lift()
+            self._refresh_care_window()
+            return
+
+        window = tk.Toplevel(self.root)
+        self.care_window = window
+        window.title("熊猫状态")
+        window.attributes("-topmost", True)
+        window.resizable(False, False)
+        window.configure(bg="#fffaf0")
+        window.protocol("WM_DELETE_WINDOW", self._close_care_window)
+
+        frame = tk.Frame(window, bg="#fffaf0", padx=14, pady=12)
+        frame.pack(fill="both", expand=True)
+
+        self.care_vars = {
+            "title": tk.StringVar(),
+            "mood": tk.StringVar(),
+            "energy": tk.StringVar(),
+            "cleanliness": tk.StringVar(),
+            "fullness": tk.StringVar(),
+            "bond": tk.StringVar(),
+        }
+
+        tk.Label(frame, textvariable=self.care_vars["title"], bg="#fffaf0", fg="#9a3412", font=("Microsoft YaHei UI", 12, "bold")).grid(row=0, column=0, columnspan=2, sticky="w")
+        tk.Label(frame, textvariable=self.care_vars["mood"], bg="#fffaf0", fg="#334155", font=("Microsoft YaHei UI", 10)).grid(row=1, column=0, columnspan=2, sticky="w", pady=(8, 0))
+        tk.Label(frame, textvariable=self.care_vars["energy"], bg="#fffaf0", fg="#334155", font=("Microsoft YaHei UI", 10)).grid(row=2, column=0, columnspan=2, sticky="w")
+        tk.Label(frame, textvariable=self.care_vars["cleanliness"], bg="#fffaf0", fg="#334155", font=("Microsoft YaHei UI", 10)).grid(row=3, column=0, columnspan=2, sticky="w")
+        tk.Label(frame, textvariable=self.care_vars["fullness"], bg="#fffaf0", fg="#334155", font=("Microsoft YaHei UI", 10)).grid(row=4, column=0, columnspan=2, sticky="w")
+        tk.Label(frame, textvariable=self.care_vars["bond"], bg="#fffaf0", fg="#334155", font=("Microsoft YaHei UI", 10)).grid(row=5, column=0, columnspan=2, sticky="w", pady=(0, 8))
+
+        tk.Button(frame, text="喂零食", command=self._feed_pet, width=10).grid(row=6, column=0, padx=(0, 6))
+        tk.Button(frame, text="洗澡", command=self._open_bath_window, width=10).grid(row=6, column=1)
+
+        self._refresh_care_window()
+        window.update_idletasks()
+        width = window.winfo_width()
+        height = window.winfo_height()
+        current_x, current_y = self._current_window_position()
+        x = min(window.winfo_screenwidth() - width, current_x + self.width + 14)
+        y = max(0, current_y)
+        window.geometry(f"{width}x{height}+{x}+{y}")
+
+    def _close_care_window(self):
+        if self.care_window:
+            try:
+                self.care_window.destroy()
+            except tk.TclError:
+                pass
+            self.care_window = None
+
+    def _refresh_care_window(self):
+        if not getattr(self, "care_vars", None):
+            return
+        stats = self.care_stats
+        self.care_vars["title"].set(f"Lv.{stats['level']} 熊猫亲密度面板")
+        self.care_vars["mood"].set(f"心情：{stats['mood']}/100")
+        self.care_vars["energy"].set(f"体力：{stats['energy']}/100")
+        self.care_vars["cleanliness"].set(f"清洁：{stats['cleanliness']}/100")
+        self.care_vars["fullness"].set(f"饱腹：{stats['fullness']}/100")
+        self.care_vars["bond"].set(f"亲密度：{stats['bond']}  经验：{stats['exp']}/100")
+
+    def _clamp_stat(self, key, delta):
+        self.care_stats[key] = max(0, min(100, self.care_stats.get(key, 0) + delta))
+
+    def _gain_bond(self, exp_gain):
+        self.care_stats["bond"] += exp_gain
+        self.care_stats["exp"] += exp_gain
+        while self.care_stats["exp"] >= 100:
+            self.care_stats["exp"] -= 100
+            self.care_stats["level"] += 1
+            self.encourage_text = "升级啦"
+            self.encourage_until = time.monotonic() + 2.0
+
+    def _feed_pet(self):
+        self._clamp_stat("fullness", 18)
+        self._clamp_stat("mood", 6)
+        self._clamp_stat("energy", 4)
+        self._gain_bond(6)
+        self.encourage_text = "吃饱啦"
+        self.encourage_until = time.monotonic() + 1.8
+        self._mark_pet()
+        self._refresh_care_window()
+        self._save_settings()
+
+    def _open_bath_window(self):
+        if self.bath_window and self.bath_window.winfo_exists():
+            self.bath_window.deiconify()
+            self.bath_window.lift()
+            return
+
+        window = tk.Toplevel(self.root)
+        self.bath_window = window
+        window.title("给熊猫洗澡")
+        window.attributes("-topmost", True)
+        window.resizable(False, False)
+        window.configure(bg="#eff6ff")
+        window.protocol("WM_DELETE_WINDOW", self._close_bath_window)
+
+        frame = tk.Frame(window, bg="#eff6ff", padx=16, pady=14)
+        frame.pack(fill="both", expand=True)
+        tk.Label(frame, text="开始给熊猫洗澡", bg="#eff6ff", fg="#1d4ed8", font=("Microsoft YaHei UI", 12, "bold")).pack(anchor="w")
+        tk.Label(frame, text="泡泡搓一搓，清洁度会提升。", bg="#eff6ff", fg="#334155", font=("Microsoft YaHei UI", 10), pady=8).pack(anchor="w")
+        self.bath_progress = ttk.Progressbar(frame, orient="horizontal", mode="determinate", maximum=100, length=240)
+        self.bath_progress.pack(fill="x")
+        tk.Button(frame, text="开始洗澡", command=self._start_bath_sequence, width=12).pack(anchor="e", pady=(10, 0))
+
+        window.update_idletasks()
+        width = window.winfo_width()
+        height = window.winfo_height()
+        current_x, current_y = self._current_window_position()
+        x = max(0, current_x - width - 14)
+        y = max(0, current_y)
+        window.geometry(f"{width}x{height}+{x}+{y}")
+
+    def _start_bath_sequence(self):
+        if not self.bath_progress:
+            return
+        self.bath_progress["value"] = 0
+        self._advance_bath_progress(0)
+
+    def _advance_bath_progress(self, value):
+        if not self.bath_progress or not self.bath_window or not self.bath_window.winfo_exists():
+            return
+        self.bath_progress["value"] = value
+        if value >= 100:
+            self._clamp_stat("cleanliness", 30)
+            self._clamp_stat("mood", 10)
+            self._gain_bond(10)
+            self.encourage_text = "香香的"
+            self.encourage_until = time.monotonic() + 2.0
+            self._mark_pet()
+            self._refresh_care_window()
+            self._save_settings()
+            self.bath_after_id = self.root.after(600, self._close_bath_window)
+            return
+        self.bath_after_id = self.root.after(180, lambda: self._advance_bath_progress(value + 20))
+
+    def _close_bath_window(self):
+        if self.bath_after_id:
+            self.root.after_cancel(self.bath_after_id)
+            self.bath_after_id = None
+        if self.bath_window:
+            try:
+                self.bath_window.destroy()
+            except tk.TclError:
+                pass
+            self.bath_window = None
+            self.bath_progress = None
 
     def _open_vocab_window(self):
         if self.vocab_window and self.vocab_window.winfo_exists():
@@ -728,11 +931,15 @@ class PetApp:
             record["known"] = record.get("known", 0) + 1
             record["streak"] = record.get("streak", 0) + 1
             self.encourage_text = "记住啦"
+            self._gain_bond(2)
+            self._clamp_stat("mood", 2)
         else:
             record["missed"] = record.get("missed", 0) + 1
             record["streak"] = 0
             self.encourage_text = "再看一眼"
+            self._clamp_stat("mood", -1)
         self.encourage_until = time.monotonic() + 1.6
+        self._refresh_care_window()
         self._save_settings()
         self._next_vocab_word()
 
@@ -778,6 +985,7 @@ class PetApp:
         self.previous_type_key_index = next_key
         self.key_bursts.append(now)
         self.key_bursts = [item for item in self.key_bursts if now - item < 0.45]
+        self._clamp_stat("energy", -1)
         self.recent_key_times.append(now)
         self.recent_key_times = [item for item in self.recent_key_times if now - item < 10.0]
         if len(self.recent_key_times) >= 14 and now - self.last_encourage_at > 8.0:
@@ -787,6 +995,9 @@ class PetApp:
             self.previous_encourage_text = self.encourage_text
             self.encourage_until = now + 2.8
             self.last_encourage_at = now
+            self._gain_bond(3)
+            self._clamp_stat("mood", 3)
+        self._refresh_care_window()
 
     def _mark_mouse(self, button, pressed):
         now = time.monotonic()
@@ -803,6 +1014,9 @@ class PetApp:
         self.pet_started_at = now
         self.pet_until = now + 0.62
         self.last_activity_at = now
+        self._clamp_stat("mood", 4)
+        self._gain_bond(2)
+        self._refresh_care_window()
         self._play_sound("pet")
 
     def _play_sound(self, kind):
@@ -840,6 +1054,7 @@ class PetApp:
             elif event[0] == "input_error":
                 self._show_input_error(event[1])
 
+        self._apply_care_decay()
         self._update_hover_state()
         self._avoid_pointer()
         self._check_reminders()
@@ -871,6 +1086,9 @@ class PetApp:
 
         self._save_settings()
         self._play_sound("pet")
+        self._gain_bond(1)
+        self._clamp_stat("mood", 1)
+        self._refresh_care_window()
         window = tk.Toplevel(self.root)
         self.reminder_window = window
         window.title(title)

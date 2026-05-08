@@ -35,6 +35,8 @@ MUTEX_NAME = "Global\\KeyboardPetPandaSingleInstance"
 WATER_REMINDER_SECONDS = 30 * 60
 MOVE_REMINDER_SECONDS = 60 * 60
 REMINDER_POPUP_SECONDS = 60
+SLEEP_AFTER_SECONDS = 45
+STARTUP_AWAKE_SECONDS = 8
 DEFAULT_VOCAB_BANK = "junior"
 DEFAULT_CARE_STATS = {
     "mood": 72,
@@ -263,6 +265,7 @@ class PetApp:
         self.pet_until = 0.0
         self.pet_started_at = 0.0
         self.last_activity_at = time.monotonic()
+        self.started_at = self.last_activity_at
         self.last_blink_at = self.last_activity_at + 2.0
         self.blink_started_at = 0.0
         self.next_blink_in = random.uniform(3.0, 6.0)
@@ -320,6 +323,10 @@ class PetApp:
         self._restore_or_place_default()
 
     def run(self):
+        now = time.monotonic()
+        self.started_at = now
+        self.last_activity_at = now
+        self.last_blink_at = now
         self.input_poller.start()
         self._start_tray()
         self.root.after(30, self._tick)
@@ -1352,6 +1359,22 @@ class PetApp:
 
     def _active_animation(self):
         now = time.monotonic()
+        if now - self.started_at < STARTUP_AWAKE_SECONDS:
+            if now < self.pet_until:
+                return "pet"
+            if self.mouse_down["left"] or (now < self.click_until and self.last_click_button == "left"):
+                return "mouse_left"
+            if self.mouse_down["right"] or (now < self.click_until and self.last_click_button == "right"):
+                return "mouse_right"
+            if now < self.typing_until:
+                return "type"
+            if now - self.last_blink_at > self.next_blink_in:
+                self.blink_started_at = now
+                self.last_blink_at = now
+                self.next_blink_in = random.uniform(3.0, 6.0)
+            if now - self.blink_started_at < 0.25:
+                return "blink"
+            return "idle"
         if self.care_action and now < self.care_action_until:
             return "idle"
         if now < self.pet_until:
@@ -1364,7 +1387,7 @@ class PetApp:
             return "type"
         if self.hovering and now - self.last_activity_at < 10.0:
             return "hover"
-        if now - self.last_activity_at > 18.0:
+        if now - self.last_activity_at > SLEEP_AFTER_SECONDS:
             return "sleep"
         if now - self.last_blink_at > self.next_blink_in:
             self.blink_started_at = now

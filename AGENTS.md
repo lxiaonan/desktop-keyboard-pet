@@ -165,6 +165,8 @@ These are defined in `src/keyboard_pet.py`:
 WATER_REMINDER_SECONDS = 30 * 60
 MOVE_REMINDER_SECONDS = 60 * 60
 REMINDER_POPUP_SECONDS = 60
+SLEEP_AFTER_SECONDS = 45
+STARTUP_AWAKE_SECONDS = 8
 MUTEX_NAME = Global\KeyboardPetPandaSingleInstance
 ```
 

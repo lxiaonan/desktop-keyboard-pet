@@ -240,6 +240,10 @@ requirements.txt
 - Startup uses the current user's Windows Run registry key.
 - Sound effects use Windows `winsound.Beep`; no external audio files are required.
 
+## Friend Links
+
+- [linux.do](https://linux.do) — Linux and open-source technology community
+
 ## Troubleshooting
 
 - **No tray icon**: Make sure `pystray` and `Pillow` are installed. Run `python -m pip install -r requirements.txt`.

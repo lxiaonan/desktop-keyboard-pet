@@ -240,6 +240,10 @@ requirements.txt
 - 开机启动只写入当前用户的 Windows Run 注册表项。
 - 音效使用 Windows `winsound.Beep`，不需要外部音频文件。
 
+## 友链
+
+- [linux.do](https://linux.do) — Linux 与开源技术社区
+
 ## 故障排查
 
 - **没有托盘图标**：确认已安装依赖 `pystray` 和 `Pillow`。可运行 `python -m pip install -r requirements.txt`。

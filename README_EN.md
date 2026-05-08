@@ -39,6 +39,7 @@ To rebuild the executable:
 - **Light progression system**: Includes mood, energy, cleanliness, fullness, bond, and level, all of which change gradually over time and interaction.
 - **Feeding, bathing, and resting**: Feed snacks to restore fullness, bathe the panda to improve cleanliness, or let it rest to recover energy.
 - **Visible status feedback**: The panda shows small visual hints when it gets dirty, hungry, sleepy, or unhappy.
+- **Status hint bubbles**: When energy, fullness, or cleanliness gets too low, the panda occasionally explains how to fix it.
 - **Typing encouragement**: After sustained typing, the panda occasionally shows short encouragement bubbles.
 - **Cursor avoidance**: Enabled by default. If the cursor rests on the panda for a moment, it gently moves away.
 - **System tray menu**: The tray icon supports show/hide, size, topmost, startup, sound, cursor avoidance, health reminders, reset position, and exit.
@@ -245,5 +246,6 @@ requirements.txt
 - **A second panda does not appear**: This is expected. The app is single-instance.
 - **Wrong position**: Delete `%APPDATA%\KeyboardPet\settings.json` and restart.
 - **No vocabulary banks**: Create `%APPDATA%\KeyboardPet\word_banks.json`; use `assets\vocab\word_banks.example.json` as the format reference.
+- **`Zz` appears above the panda**: Energy is low. Right-click the panda and choose **Rest** to recover.
 - **No sound**: Make sure sound is enabled in the menu and check system volume.
 - **Startup does not work**: Make sure Startup is checked in the menu. It uses the current user registry key and does not require admin rights.

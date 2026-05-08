@@ -38,6 +38,7 @@ REMINDER_POPUP_SECONDS = 60
 SLEEP_AFTER_SECONDS = 45
 STARTUP_AWAKE_SECONDS = 8
 INPUT_FEEDBACK_SECONDS = 1.0
+CARE_HINT_COOLDOWN_SECONDS = 10 * 60
 DEFAULT_VOCAB_BANK = "junior"
 DEFAULT_CARE_STATS = {
     "mood": 72,
@@ -276,6 +277,8 @@ class PetApp:
         self.encourage_text = ""
         self.previous_encourage_text = ""
         self.last_encourage_at = 0.0
+        self.last_care_hint_at = 0.0
+        self.last_care_hint_kind = ""
         self.hovering = False
         self.hover_started_at = 0.0
         self.last_hovering = False
@@ -672,8 +675,31 @@ class PetApp:
             self._clamp_stat("energy", -ticks)
         if self.care_stats["fullness"] < 35 or self.care_stats["cleanliness"] < 35:
             self._clamp_stat("mood", -ticks)
+        self._maybe_show_care_hint()
         self._refresh_care_window()
         self._save_settings()
+
+    def _maybe_show_care_hint(self):
+        now = time.monotonic()
+        if now - self.last_care_hint_at < CARE_HINT_COOLDOWN_SECONDS:
+            return
+        hint = ""
+        kind = ""
+        if self.care_stats["energy"] < 35:
+            kind = "energy"
+            hint = "体力低，右键休息"
+        elif self.care_stats["fullness"] < 30:
+            kind = "fullness"
+            hint = "有点饿，喂零食"
+        elif self.care_stats["cleanliness"] < 30:
+            kind = "cleanliness"
+            hint = "该洗澡啦"
+        if not hint:
+            return
+        self.last_care_hint_at = now
+        self.last_care_hint_kind = kind
+        self.encourage_text = hint
+        self.encourage_until = now + 3.2
 
     def _toggle_visible(self):
         if self.root.state() == "withdrawn":
@@ -762,6 +788,7 @@ class PetApp:
 
     def _feed_pet(self):
         self._start_care_action("feed", 2.2)
+        self.last_care_hint_at = 0.0
         self._clamp_stat("fullness", 18)
         self._clamp_stat("mood", 6)
         self._clamp_stat("energy", 4)
@@ -844,6 +871,7 @@ class PetApp:
         self.bath_progress["value"] = value
         if value >= 100:
             self._start_care_action("bath", 3.0)
+            self.last_care_hint_at = 0.0
             self._clamp_stat("cleanliness", 30)
             self._clamp_stat("mood", 10)
             self._gain_bond(10)
@@ -880,6 +908,7 @@ class PetApp:
         self.rest_progress["value"] = value
         if value >= 100:
             self._start_care_action("rest", 3.6)
+            self.last_care_hint_at = 0.0
             self._clamp_stat("energy", 26)
             self._clamp_stat("mood", 8)
             self._gain_bond(5)

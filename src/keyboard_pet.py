@@ -37,6 +37,7 @@ MOVE_REMINDER_SECONDS = 60 * 60
 REMINDER_POPUP_SECONDS = 60
 SLEEP_AFTER_SECONDS = 45
 STARTUP_AWAKE_SECONDS = 8
+INPUT_FEEDBACK_SECONDS = 1.0
 DEFAULT_VOCAB_BANK = "junior"
 DEFAULT_CARE_STATS = {
     "mood": 72,
@@ -269,6 +270,7 @@ class PetApp:
         self.last_blink_at = self.last_activity_at + 2.0
         self.blink_started_at = 0.0
         self.next_blink_in = random.uniform(3.0, 6.0)
+        self.last_input_feedback_at = self.last_activity_at
         self.recent_key_times = []
         self.encourage_until = 0.0
         self.encourage_text = ""
@@ -306,6 +308,8 @@ class PetApp:
         self.current_vocab_answer_visible = True
         self.vocab_vars = {}
         self.care_stats = self._load_care_stats()
+        if self.care_stats["energy"] < 35:
+            self.care_stats["energy"] = 45
         self.last_care_tick_at = time.monotonic()
         self.care_window = None
         self.bath_window = None
@@ -1137,6 +1141,7 @@ class PetApp:
         now = time.monotonic()
         self._cancel_care_action()
         self.last_activity_at = now
+        self.last_input_feedback_at = now
         self.last_blink_at = now
         if now < self.typing_until - 0.12:
             return
@@ -1152,6 +1157,8 @@ class PetApp:
         self.key_bursts.append(now)
         self.key_bursts = [item for item in self.key_bursts if now - item < 0.45]
         self._clamp_stat("energy", -1)
+        if self.care_stats["energy"] < 35:
+            self.care_stats["energy"] = 35
         self.recent_key_times.append(now)
         self.recent_key_times = [item for item in self.recent_key_times if now - item < 10.0]
         if len(self.recent_key_times) >= 14 and now - self.last_encourage_at > 8.0:
@@ -1169,6 +1176,7 @@ class PetApp:
         now = time.monotonic()
         if pressed:
             self._cancel_care_action()
+            self.last_input_feedback_at = now
         self.mouse_down[button] = pressed
         if pressed:
             self.last_activity_at = now
@@ -1183,6 +1191,7 @@ class PetApp:
         self.pet_started_at = now
         self.pet_until = now + 0.62
         self.last_activity_at = now
+        self.last_input_feedback_at = now
         self._clamp_stat("mood", 4)
         self._gain_bond(2)
         self._refresh_care_window()
@@ -1527,7 +1536,8 @@ class PetApp:
                 font=("Microsoft YaHei UI", max(8, int(10 * s)), "bold"),
             )
 
-        if stats["energy"] < 35:
+        input_active = time.monotonic() - self.last_input_feedback_at < INPUT_FEEDBACK_SECONDS
+        if stats["energy"] < 35 and not input_active:
             self.canvas.create_text(
                 x0 + 232 * s,
                 y0 + 42 * s,

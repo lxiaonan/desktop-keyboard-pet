@@ -147,6 +147,7 @@ class GlobalInputPoller:
 
     VK_LBUTTON = 0x01
     VK_RBUTTON = 0x02
+    MODIFIER_KEYS = {0x10, 0x11, 0x12, 0x14, 0x5B, 0x5C}
 
     def __init__(self, events):
         self.events = events
@@ -154,6 +155,7 @@ class GlobalInputPoller:
         self.thread = None
         self.previous_keys = set()
         self.previous_mouse = {"left": False, "right": False}
+        self.last_key_event_at = 0.0
         self.key_codes = [
             code
             for code in range(0x08, 0xFF)
@@ -177,16 +179,32 @@ class GlobalInputPoller:
     def stop(self):
         self.stop_event.set()
 
+    def _key_state(self, vk_code):
+        return self.user32.GetAsyncKeyState(vk_code)
+
     def _pressed(self, vk_code):
-        return bool(self.user32.GetAsyncKeyState(vk_code) & 0x8000)
+        return bool(self._key_state(vk_code) & 0x8000)
 
     def _run(self):
         while not self.stop_event.is_set():
             now = time.monotonic()
-            current_keys = {code for code in self.key_codes if self._pressed(code)}
+            current_keys = set()
+            changed_keys = set()
+            for code in self.key_codes:
+                state = self._key_state(code)
+                if state & 0x8000:
+                    current_keys.add(code)
+                if state & 0x0001:
+                    changed_keys.add(code)
             fresh_keys = current_keys - self.previous_keys
-            if fresh_keys:
-                self.events.put_nowait(("key", min(fresh_keys), now))
+            tapped_keys = changed_keys - self.previous_keys
+            event_keys = fresh_keys or tapped_keys
+            repeat_keys = current_keys - self.MODIFIER_KEYS
+            if not event_keys and repeat_keys and now - self.last_key_event_at > 0.25:
+                event_keys = repeat_keys
+            if event_keys:
+                self.events.put_nowait(("key", min(event_keys), now))
+                self.last_key_event_at = now
             self.previous_keys = current_keys
 
             mouse_state = {
@@ -1111,11 +1129,12 @@ class PetApp:
     def _mark_typing(self, vk_code=0):
         now = time.monotonic()
         self._cancel_care_action()
+        self.last_activity_at = now
+        self.last_blink_at = now
         if now < self.typing_until - 0.12:
             return
-        self.typing_until = now + 0.32
+        self.typing_until = now + 0.46
         self.type_started_at = now
-        self.last_activity_at = now
         self._play_sound("key")
         key_count = len(self.pet_frames[self.size_name]["type"])
         next_key = random.randrange(key_count)

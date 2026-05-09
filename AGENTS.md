@@ -136,7 +136,8 @@ Do not leave startup enabled during automated tests unless the user explicitly a
 - Hover interaction with blush/wave frames.
 - Petting interaction with visible head-pat hand, blush, and sparkles.
 - Dragging feedback that makes the panda feel carried.
-- Optional autonomous activity, default on: idle walking, looking, and stretching.
+- Optional autonomous activity, default on: idle walking, looking, stretching, and sitting near screen edges.
+- Double-click opens the care/status panel.
 - Light progression system with mood, energy, cleanliness, fullness, bond, level, and exp.
 - Feeding interaction that raises fullness and restores a bit of mood and energy.
 - Bath window that raises cleanliness, mood, and bond.

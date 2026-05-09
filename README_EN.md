@@ -34,7 +34,7 @@ To rebuild the executable:
 - **Mouse click animation**: Left/right clicks animate directly inside the original mouse area, without adding a detached overlay.
 - **Mouse-following eyes**: While idle, the panda's eyes subtly follow the cursor.
 - **Idle animation**: The panda blinks automatically and becomes sleepy after a period of inactivity.
-- **Autonomous activity**: After a quiet period, the panda may gently walk, look at you, or stretch like a desktop mascot.
+- **Autonomous activity**: After a quiet period, the panda may gently walk, look at you, stretch, or sit near the desktop edge like a mascot.
 - **Hover interaction**: Hovering over the panda triggers a blush and a subtle waving animation.
 - **Petting and carrying interaction**: Clicking pets the panda; dragging it shows a small carried-by-hand style feedback.
 - **Light progression system**: Includes mood, energy, cleanliness, fullness, bond, and level, all of which change gradually over time and interaction.
@@ -74,6 +74,7 @@ run_silent.bat
 ## Controls
 
 - **Left-click the panda**: Petting interaction.
+- **Double-click the panda**: Open the care/status panel.
 - **Left-drag the panda**: Move it.
 - **Right-click the panda**: Open the menu.
 - **Care panel**: View mood, energy, cleanliness, fullness, bond, and level.

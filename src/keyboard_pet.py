@@ -301,6 +301,7 @@ class PetApp:
         self.autonomous_action = None
         self.autonomous_direction = 1
         self.autonomous_base_y = 0
+        self.autonomous_edge_x = None
         self.autonomous_started_at = 0.0
         self.autonomous_until = 0.0
         self.next_autonomous_at = time.monotonic() + random.uniform(
@@ -482,6 +483,7 @@ class PetApp:
 
     def _bind_window(self):
         self.root.bind("<ButtonPress-1>", self._start_drag)
+        self.root.bind("<Double-Button-1>", self._open_care_window)
         self.root.bind("<B1-Motion>", self._drag)
         self.root.bind("<ButtonRelease-1>", self._end_drag)
         self.root.bind("<Button-3>", self._show_menu)
@@ -739,6 +741,7 @@ class PetApp:
         self.autonomous_action = None
         self.autonomous_until = 0.0
         self.autonomous_started_at = 0.0
+        self.autonomous_edge_x = None
         self._schedule_next_autonomous()
 
     def _start_autonomous_action(self, action, duration):
@@ -748,16 +751,26 @@ class PetApp:
         self.autonomous_started_at = now
         self.autonomous_until = now + duration
         self.autonomous_base_y = self._current_window_position()[1]
+        self.autonomous_edge_x = None
+        if action == "edge":
+            current_x, _ = self._current_window_position()
+            screen_w = self.root.winfo_screenwidth()
+            left = 12
+            right = max(12, screen_w - self.width - 12)
+            self.autonomous_edge_x = left if current_x < screen_w / 2 else right
         self.next_autonomous_at = now + duration + random.uniform(
             AUTONOMOUS_MIN_DELAY_SECONDS,
             AUTONOMOUS_MAX_DELAY_SECONDS,
         )
         if action == "look":
-            self.encourage_text = random.choice(("我在这儿", "陪你一会儿", "歇口气呀"))
+            self.encourage_text = self._random_mascot_line()
             self.encourage_until = now + 2.4
         elif action == "stretch":
             self.encourage_text = "伸个懒腰"
             self.encourage_until = now + 2.0
+        elif action == "edge":
+            self.encourage_text = "去边上坐坐"
+            self.encourage_until = now + 2.2
 
     def _update_autonomous_action(self):
         now = time.monotonic()
@@ -770,20 +783,39 @@ class PetApp:
         if now - self.last_activity_at < AUTONOMOUS_IDLE_SECONDS or now < self.next_autonomous_at:
             return
         action = random.choices(
-            ("walk", "look", "stretch"),
-            weights=(0.48, 0.32, 0.20),
+            ("walk", "look", "stretch", "edge"),
+            weights=(0.40, 0.28, 0.18, 0.14),
             k=1,
         )[0]
-        self._start_autonomous_action(action, random.uniform(2.6, 5.4))
+        duration = random.uniform(2.6, 5.4) if action != "edge" else random.uniform(4.2, 7.0)
+        self._start_autonomous_action(action, duration)
+
+    def _random_mascot_line(self):
+        if self.care_stats["fullness"] < 35:
+            return random.choice(("肚子咕咕", "想吃点东西"))
+        if self.care_stats["cleanliness"] < 35:
+            return random.choice(("有点脏啦", "想洗香香"))
+        if self.care_stats["energy"] < 40:
+            return random.choice(("有点困", "想休息会儿"))
+        if self.care_stats["mood"] < 40:
+            return random.choice(("陪陪我嘛", "摸摸头好不好"))
+        return random.choice(("我在这儿", "陪你一会儿", "歇口气呀", "今天也很稳"))
 
     def _move_autonomous(self):
-        if self.autonomous_action != "walk" or self.dragging:
+        if self.autonomous_action not in ("walk", "edge") or self.dragging:
             return
         now = time.monotonic()
         if now >= self.autonomous_until:
             return
         current_x, current_y = self._current_window_position()
-        step = self.autonomous_direction * (1 + int((self.frame // 10) % 2))
+        if self.autonomous_action == "edge" and self.autonomous_edge_x is not None:
+            distance = self.autonomous_edge_x - current_x
+            if abs(distance) <= 2:
+                step = 0
+            else:
+                step = 2 if distance > 0 else -2
+        else:
+            step = self.autonomous_direction * (1 + int((self.frame // 10) % 2))
         new_x = current_x + step
         screen_w = self.root.winfo_screenwidth()
         screen_h = self.root.winfo_screenheight()
@@ -1517,7 +1549,7 @@ class PetApp:
             return "idle"
         if self.care_action and now < self.care_action_until:
             return "idle"
-        if self.autonomous_action == "walk":
+        if self.autonomous_action in ("walk", "edge"):
             return "hover"
         if self.autonomous_action in ("look", "stretch"):
             return "idle"
@@ -1590,7 +1622,7 @@ class PetApp:
             lift = -3.0 + math.sin(self.frame / 2.4) * 1.2
         elif self.autonomous_action == "stretch":
             lift = math.sin((time.monotonic() - self.autonomous_started_at) * 5.5) * 2.4
-        elif self.autonomous_action == "walk":
+        elif self.autonomous_action in ("walk", "edge"):
             lift = math.sin((time.monotonic() - self.autonomous_started_at) * 10) * 1.8
         else:
             lift = math.sin(self.frame / 18) * 0.8
@@ -1630,7 +1662,7 @@ class PetApp:
         if not self.autonomous_action:
             return
         elapsed = now - self.autonomous_started_at
-        if self.autonomous_action == "walk":
+        if self.autonomous_action in ("walk", "edge"):
             for i in range(2):
                 px = x0 + (98 + i * 94) * s
                 py = y0 + (278 + math.sin(elapsed * 8 + i) * 4) * s
@@ -1641,6 +1673,14 @@ class PetApp:
                     py + 2 * s,
                     fill="#94a3b8",
                     outline="",
+                )
+            if self.autonomous_action == "edge":
+                self.canvas.create_text(
+                    x0 + 158 * s,
+                    y0 + 36 * s,
+                    text="坐一会儿",
+                    fill="#475569",
+                    font=("Microsoft YaHei UI", max(8, int(9 * s)), "bold"),
                 )
         elif self.autonomous_action == "look":
             self.canvas.create_text(

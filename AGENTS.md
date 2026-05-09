@@ -135,6 +135,8 @@ Do not leave startup enabled during automated tests unless the user explicitly a
 - Idle blink and sleepy animations.
 - Hover interaction with blush/wave frames.
 - Petting interaction with visible head-pat hand, blush, and sparkles.
+- Dragging feedback that makes the panda feel carried.
+- Optional autonomous activity, default on: idle walking, looking, and stretching.
 - Light progression system with mood, energy, cleanliness, fullness, bond, level, and exp.
 - Feeding interaction that raises fullness and restores a bit of mood and energy.
 - Bath window that raises cleanliness, mood, and bond.
@@ -169,6 +171,9 @@ SLEEP_AFTER_SECONDS = 45
 STARTUP_AWAKE_SECONDS = 8
 INPUT_FEEDBACK_SECONDS = 1.0
 CARE_HINT_COOLDOWN_SECONDS = 10 * 60
+AUTONOMOUS_IDLE_SECONDS = 12
+AUTONOMOUS_MIN_DELAY_SECONDS = 18
+AUTONOMOUS_MAX_DELAY_SECONDS = 42
 MUTEX_NAME = Global\KeyboardPetPandaSingleInstance
 ```
 
@@ -209,6 +214,7 @@ Current settings shape:
   "topmost": true,
   "sound": false,
   "avoid_mouse": true,
+  "autonomous": true,
   "reminders": true,
   "water_reminder_remaining": 1800,
   "move_reminder_remaining": 3600,

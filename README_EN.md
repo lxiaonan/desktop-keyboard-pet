@@ -34,15 +34,16 @@ To rebuild the executable:
 - **Mouse click animation**: Left/right clicks animate directly inside the original mouse area, without adding a detached overlay.
 - **Mouse-following eyes**: While idle, the panda's eyes subtly follow the cursor.
 - **Idle animation**: The panda blinks automatically and becomes sleepy after a period of inactivity.
+- **Autonomous activity**: After a quiet period, the panda may gently walk, look at you, or stretch like a desktop mascot.
 - **Hover interaction**: Hovering over the panda triggers a blush and a subtle waving animation.
-- **Petting interaction**: Clicking or dragging the panda triggers a petting animation with blush and small sparkles.
+- **Petting and carrying interaction**: Clicking pets the panda; dragging it shows a small carried-by-hand style feedback.
 - **Light progression system**: Includes mood, energy, cleanliness, fullness, bond, and level, all of which change gradually over time and interaction.
 - **Feeding, bathing, and resting**: Feed snacks to restore fullness, bathe the panda to improve cleanliness, or let it rest to recover energy.
 - **Visible status feedback**: The panda shows small visual hints when it gets dirty, hungry, sleepy, or unhappy.
 - **Status hint bubbles**: When energy, fullness, or cleanliness gets too low, the panda occasionally explains how to fix it.
 - **Typing encouragement**: After sustained typing, the panda occasionally shows short encouragement bubbles.
 - **Cursor avoidance**: Enabled by default. If the cursor rests on the panda for a moment, it gently moves away.
-- **System tray menu**: The tray icon supports show/hide, size, topmost, startup, sound, cursor avoidance, health reminders, reset position, and exit.
+- **System tray menu**: The tray icon supports show/hide, size, topmost, startup, sound, cursor avoidance, autonomous activity, health reminders, reset position, and exit.
 - **Right-click menu**: Right-click the panda to open the common actions menu.
 - **Optional sound effects**: Disabled by default. When enabled, typing, clicking, and petting play short beeps.
 - **Health reminders**: Enabled by default. Reminds you to drink water every 30 minutes and move around every 1 hour. The popup stays for 1 minute or closes when confirmed.
@@ -89,6 +90,7 @@ run_silent.bat
 - **Startup**: Start automatically after Windows login.
 - **Sound**: Toggle short beep effects. Disabled by default.
 - **Avoid Cursor**: Toggle gentle cursor avoidance. Enabled by default.
+- **Autonomous Activity**: Toggle idle walking, looking, and stretching. Enabled by default.
 - **Health Reminders**: Toggle water and movement reminders. Enabled by default.
 - **Care Panel**: Open the progression/status panel.
 - **Feed Snack**: Improve fullness and restore a little mood and energy.
@@ -106,7 +108,7 @@ Settings are saved automatically to:
 %APPDATA%\KeyboardPet\settings.json
 ```
 
-Saved values include size, position, topmost state, sound, cursor avoidance, health reminders, vocabulary progress, and care stats.
+Saved values include size, position, topmost state, sound, cursor avoidance, autonomous activity, health reminders, vocabulary progress, and care stats.
 
 If the position becomes incorrect, delete this file and restart the app. It will return to the bottom-right corner.
 

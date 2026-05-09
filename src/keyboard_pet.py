@@ -39,6 +39,9 @@ SLEEP_AFTER_SECONDS = 45
 STARTUP_AWAKE_SECONDS = 8
 INPUT_FEEDBACK_SECONDS = 1.0
 CARE_HINT_COOLDOWN_SECONDS = 10 * 60
+AUTONOMOUS_IDLE_SECONDS = 12
+AUTONOMOUS_MIN_DELAY_SECONDS = 18
+AUTONOMOUS_MAX_DELAY_SECONDS = 42
 DEFAULT_VOCAB_BANK = "junior"
 DEFAULT_CARE_STATS = {
     "mood": 72,
@@ -289,10 +292,21 @@ class PetApp:
         self.always_on_top = tk.BooleanVar(value=bool(self.settings.get("topmost", True)))
         self.sound_enabled = tk.BooleanVar(value=bool(self.settings.get("sound", False)))
         self.avoid_enabled = tk.BooleanVar(value=bool(self.settings.get("avoid_mouse", True)))
+        self.autonomous_enabled = tk.BooleanVar(value=bool(self.settings.get("autonomous", True)))
         self.reminders_enabled = tk.BooleanVar(value=bool(self.settings.get("reminders", True)))
         self.startup_enabled = tk.BooleanVar(value=startup_enabled())
         self.root.attributes("-topmost", self.always_on_top.get())
         self.tray_icon = None
+        self.dragging = False
+        self.autonomous_action = None
+        self.autonomous_direction = 1
+        self.autonomous_base_y = 0
+        self.autonomous_started_at = 0.0
+        self.autonomous_until = 0.0
+        self.next_autonomous_at = time.monotonic() + random.uniform(
+            AUTONOMOUS_MIN_DELAY_SECONDS,
+            AUTONOMOUS_MAX_DELAY_SECONDS,
+        )
         now = time.monotonic()
         self.next_water_reminder_at = now + float(self.settings.get("water_reminder_remaining", WATER_REMINDER_SECONDS))
         self.next_move_reminder_at = now + float(self.settings.get("move_reminder_remaining", MOVE_REMINDER_SECONDS))
@@ -364,6 +378,7 @@ class PetApp:
             "topmost": self.always_on_top.get(),
             "sound": self.sound_enabled.get(),
             "avoid_mouse": self.avoid_enabled.get(),
+            "autonomous": self.autonomous_enabled.get(),
             "reminders": self.reminders_enabled.get(),
             "water_reminder_remaining": max(1, int(self.next_water_reminder_at - time.monotonic())),
             "move_reminder_remaining": max(1, int(self.next_move_reminder_at - time.monotonic())),
@@ -406,6 +421,11 @@ class PetApp:
             label="避让鼠标",
             variable=self.avoid_enabled,
             command=self._toggle_avoid,
+        )
+        self.menu.add_checkbutton(
+            label="自主活动",
+            variable=self.autonomous_enabled,
+            command=self._toggle_autonomous,
         )
         self.menu.add_checkbutton(
             label="健康提醒",
@@ -451,6 +471,7 @@ class PetApp:
             pystray.MenuItem("开机启动", after(self._toggle_startup_from_tray)),
             pystray.MenuItem("音效", after(self._toggle_sound_from_tray)),
             pystray.MenuItem("避让鼠标", after(self._toggle_avoid_from_tray)),
+            pystray.MenuItem("自主活动", after(self._toggle_autonomous_from_tray)),
             pystray.MenuItem("健康提醒", after(self._toggle_reminders_from_tray)),
             pystray.MenuItem("摸鱼背单词", after(self._open_vocab_window)),
             pystray.MenuItem("回到右下角", after(self._place_default)),
@@ -649,6 +670,14 @@ class PetApp:
         self.avoid_enabled.set(not self.avoid_enabled.get())
         self._toggle_avoid()
 
+    def _toggle_autonomous(self):
+        self._schedule_next_autonomous()
+        self._save_settings()
+
+    def _toggle_autonomous_from_tray(self):
+        self.autonomous_enabled.set(not self.autonomous_enabled.get())
+        self._toggle_autonomous()
+
     def _toggle_reminders(self):
         now = time.monotonic()
         if self.reminders_enabled.get():
@@ -700,6 +729,71 @@ class PetApp:
         self.last_care_hint_kind = kind
         self.encourage_text = hint
         self.encourage_until = now + 3.2
+
+    def _schedule_next_autonomous(self, delay=None):
+        if delay is None:
+            delay = random.uniform(AUTONOMOUS_MIN_DELAY_SECONDS, AUTONOMOUS_MAX_DELAY_SECONDS)
+        self.next_autonomous_at = time.monotonic() + delay
+
+    def _cancel_autonomous_action(self):
+        self.autonomous_action = None
+        self.autonomous_until = 0.0
+        self.autonomous_started_at = 0.0
+        self._schedule_next_autonomous()
+
+    def _start_autonomous_action(self, action, duration):
+        now = time.monotonic()
+        self.autonomous_action = action
+        self.autonomous_direction = random.choice((-1, 1))
+        self.autonomous_started_at = now
+        self.autonomous_until = now + duration
+        self.autonomous_base_y = self._current_window_position()[1]
+        self.next_autonomous_at = now + duration + random.uniform(
+            AUTONOMOUS_MIN_DELAY_SECONDS,
+            AUTONOMOUS_MAX_DELAY_SECONDS,
+        )
+        if action == "look":
+            self.encourage_text = random.choice(("我在这儿", "陪你一会儿", "歇口气呀"))
+            self.encourage_until = now + 2.4
+        elif action == "stretch":
+            self.encourage_text = "伸个懒腰"
+            self.encourage_until = now + 2.0
+
+    def _update_autonomous_action(self):
+        now = time.monotonic()
+        if self.autonomous_action and now >= self.autonomous_until:
+            self.autonomous_action = None
+        if not self.autonomous_enabled.get() or self.autonomous_action or self.dragging:
+            return
+        if any(self.mouse_down.values()) or now < self.typing_until or now < self.pet_until or now < self.click_until:
+            return
+        if now - self.last_activity_at < AUTONOMOUS_IDLE_SECONDS or now < self.next_autonomous_at:
+            return
+        action = random.choices(
+            ("walk", "look", "stretch"),
+            weights=(0.48, 0.32, 0.20),
+            k=1,
+        )[0]
+        self._start_autonomous_action(action, random.uniform(2.6, 5.4))
+
+    def _move_autonomous(self):
+        if self.autonomous_action != "walk" or self.dragging:
+            return
+        now = time.monotonic()
+        if now >= self.autonomous_until:
+            return
+        current_x, current_y = self._current_window_position()
+        step = self.autonomous_direction * (1 + int((self.frame // 10) % 2))
+        new_x = current_x + step
+        screen_w = self.root.winfo_screenwidth()
+        screen_h = self.root.winfo_screenheight()
+        if new_x <= 0 or new_x >= screen_w - self.width:
+            self.autonomous_direction *= -1
+            new_x = current_x + self.autonomous_direction * 2
+        self.window_x = min(max(0, new_x), max(0, screen_w - self.width))
+        bob = int(math.sin((now - self.autonomous_started_at) * 8) * 1.4)
+        self.window_y = min(max(0, self.autonomous_base_y + bob), max(0, screen_h - self.height))
+        self.root.geometry(f"+{self.window_x}+{self.window_y}")
 
     def _toggle_visible(self):
         if self.root.state() == "withdrawn":
@@ -1146,6 +1240,8 @@ class PetApp:
         return x, y
 
     def _start_drag(self, event):
+        self.dragging = True
+        self._cancel_autonomous_action()
         self._mark_pet()
         self._mark_mouse("left", True)
         self.drag_offset = (event.x_root - self.root.winfo_x(), event.y_root - self.root.winfo_y())
@@ -1157,6 +1253,7 @@ class PetApp:
         self.root.geometry(f"+{self.window_x}+{self.window_y}")
 
     def _end_drag(self, event):
+        self.dragging = False
         self._mark_mouse("left", False)
         self.window_x = self.root.winfo_x()
         self.window_y = self.root.winfo_y()
@@ -1169,6 +1266,7 @@ class PetApp:
     def _mark_typing(self, vk_code=0):
         now = time.monotonic()
         self._cancel_care_action()
+        self._cancel_autonomous_action()
         self.last_activity_at = now
         self.last_input_feedback_at = now
         self.last_blink_at = now
@@ -1205,6 +1303,7 @@ class PetApp:
         now = time.monotonic()
         if pressed:
             self._cancel_care_action()
+            self._cancel_autonomous_action()
             self.last_input_feedback_at = now
         self.mouse_down[button] = pressed
         if pressed:
@@ -1217,6 +1316,7 @@ class PetApp:
     def _mark_pet(self):
         now = time.monotonic()
         self._cancel_care_action()
+        self._cancel_autonomous_action()
         self.pet_started_at = now
         self.pet_until = now + 0.62
         self.last_activity_at = now
@@ -1264,6 +1364,8 @@ class PetApp:
         self._apply_care_decay()
         self._update_hover_state()
         self._avoid_pointer()
+        self._update_autonomous_action()
+        self._move_autonomous()
         self._check_reminders()
         self.frame += 1
         self._draw()
@@ -1415,6 +1517,10 @@ class PetApp:
             return "idle"
         if self.care_action and now < self.care_action_until:
             return "idle"
+        if self.autonomous_action == "walk":
+            return "hover"
+        if self.autonomous_action in ("look", "stretch"):
+            return "idle"
         if now < self.pet_until:
             return "pet"
         if self.mouse_down["left"] or (now < self.click_until and self.last_click_button == "left"):
@@ -1480,15 +1586,82 @@ class PetApp:
             lift = math.sin(self.frame / 2.8) * 2.0
         elif clicking:
             lift = 1.5
+        elif self.dragging:
+            lift = -3.0 + math.sin(self.frame / 2.4) * 1.2
+        elif self.autonomous_action == "stretch":
+            lift = math.sin((time.monotonic() - self.autonomous_started_at) * 5.5) * 2.4
+        elif self.autonomous_action == "walk":
+            lift = math.sin((time.monotonic() - self.autonomous_started_at) * 10) * 1.8
         else:
             lift = math.sin(self.frame / 18) * 0.8
 
         self.canvas.delete("all")
         self.canvas.create_image(self.width / 2, self.top_pad + lift, image=self.current_image, anchor="n")
+        self._draw_autonomous_overlay()
         self._draw_care_action_overlay()
         self._draw_care_feedback()
         self._draw_gaze()
         self._draw_encouragement()
+
+    def _draw_autonomous_overlay(self):
+        s = self.asset_scale
+        x0 = self.side_pad
+        y0 = self.top_pad
+        now = time.monotonic()
+        if self.dragging:
+            cx = self.width / 2
+            self.canvas.create_line(
+                cx,
+                0,
+                cx,
+                y0 + 26 * s,
+                fill="#94a3b8",
+                width=max(1, int(1.4 * s)),
+                dash=(3, 2),
+            )
+            self.canvas.create_text(
+                cx,
+                y0 + 18 * s,
+                text="拎起来啦",
+                fill="#475569",
+                font=("Microsoft YaHei UI", max(8, int(9 * s)), "bold"),
+            )
+            return
+        if not self.autonomous_action:
+            return
+        elapsed = now - self.autonomous_started_at
+        if self.autonomous_action == "walk":
+            for i in range(2):
+                px = x0 + (98 + i * 94) * s
+                py = y0 + (278 + math.sin(elapsed * 8 + i) * 4) * s
+                self.canvas.create_oval(
+                    px - 5 * s,
+                    py - 2 * s,
+                    px + 5 * s,
+                    py + 2 * s,
+                    fill="#94a3b8",
+                    outline="",
+                )
+        elif self.autonomous_action == "look":
+            self.canvas.create_text(
+                x0 + 248 * s,
+                y0 + 72 * s + math.sin(elapsed * 4) * 2 * s,
+                text="?",
+                fill="#2563eb",
+                font=("Segoe UI", max(11, int(15 * s)), "bold"),
+            )
+        elif self.autonomous_action == "stretch":
+            self.canvas.create_arc(
+                x0 + 48 * s,
+                y0 + 112 * s,
+                x0 + 260 * s,
+                y0 + 258 * s,
+                start=205,
+                extent=130,
+                style="arc",
+                outline="#f59e0b",
+                width=max(1, int(2 * s)),
+            )
 
     def _draw_care_action_overlay(self):
         if not self.care_action or time.monotonic() >= self.care_action_until:
